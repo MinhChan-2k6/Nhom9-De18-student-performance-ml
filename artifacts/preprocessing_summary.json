@@ -1,0 +1,14 @@
+{
+  "merged_rows": 1044,
+  "cleaned_rows": 1044,
+  "duplicate_rows_removed": 0,
+  "train_rows": 730,
+  "valid_rows": 157,
+  "test_rows": 157,
+  "missing_values_after_cleaning": 0,
+  "cross_split_exact_overlaps": {
+    "train_valid": 0,
+    "train_test": 0,
+    "valid_test": 0
+  }
+}
