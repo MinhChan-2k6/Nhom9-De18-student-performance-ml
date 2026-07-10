@@ -1,0 +1,63 @@
+{
+  "task": "regression",
+  "target": "G3",
+  "best_model": "random_forest_grid_search",
+  "best_scenario": "A_with_G1_G2",
+  "validation_results": [
+    {
+      "scenario": "A_with_G1_G2",
+      "model": "random_forest_grid_search",
+      "mae": 0.7364483104,
+      "rmse": 1.1658014154,
+      "r2": 0.9032208917
+    },
+    {
+      "scenario": "A_with_G1_G2",
+      "model": "random_forest",
+      "mae": 0.7359309389,
+      "rmse": 1.1673358103,
+      "r2": 0.9029659682
+    },
+    {
+      "scenario": "A_with_G1_G2",
+      "model": "gradient_boosting",
+      "mae": 0.805899489,
+      "rmse": 1.2395300536,
+      "r2": 0.8905926291
+    },
+    {
+      "scenario": "A_with_G1_G2",
+      "model": "linear_regression",
+      "mae": 0.8844033017,
+      "rmse": 1.2773140585,
+      "r2": 0.8838209438
+    },
+    {
+      "scenario": "B_without_G1_G2",
+      "model": "gradient_boosting",
+      "mae": 2.3941404659,
+      "rmse": 3.1549963688,
+      "r2": 0.291189427
+    },
+    {
+      "scenario": "B_without_G1_G2",
+      "model": "random_forest",
+      "mae": 2.3272446707,
+      "rmse": 3.20749717,
+      "r2": 0.2674031899
+    },
+    {
+      "scenario": "B_without_G1_G2",
+      "model": "linear_regression",
+      "mae": 2.4660131369,
+      "rmse": 3.3018216534,
+      "r2": 0.2236819531
+    }
+  ],
+  "test_metrics": {
+    "mae": 0.9716179418157921,
+    "rmse": 1.6319121806894208,
+    "r2": 0.8205702046167563
+  },
+  "random_state": 42
+}
