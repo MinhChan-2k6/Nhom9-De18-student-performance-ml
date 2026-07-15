@@ -1,13 +1,3 @@
-<<<<<<< Updated upstream
-pandas>=2.0
-numpy>=1.24
-scikit-learn>=1.3
-matplotlib>=3.7
-seaborn>=0.12
-joblib>=1.3
-jupyter>=1.0
-ipykernel>=6.0
-=======
 # ========================= Data processing and EDA =========================
 numpy>=1.26,<3.0
 pandas>=2.2,<3.0
@@ -32,7 +22,7 @@ uvicorn[standard]>=0.29,<1.0
 pydantic>=2.6,<3.0
 python-multipart>=0.0.9,<1.0
 
-# ========================= Streamlit frontend =========================
+# ======================== Streamlit frontend =========================
 streamlit>=1.32,<2.0
 requests>=2.31,<3.0
 
