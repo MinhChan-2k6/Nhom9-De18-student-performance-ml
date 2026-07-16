@@ -1,0 +1,107 @@
+{
+    "task": "regression",
+    "target": "G3",
+    "best_model": "random_forest_grid_search",
+    "best_scenario": "A_with_G1_G2",
+    "selection_metric": "validation_rmse",
+    "validation_results": [
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "linear_regression",
+            "mae": 0.882706,
+            "rmse": 1.308979,
+            "r2": 0.877989
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "random_forest",
+            "mae": 0.727898,
+            "rmse": 1.178308,
+            "r2": 0.901133
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "gradient_boosting",
+            "mae": 0.785791,
+            "rmse": 1.201224,
+            "r2": 0.89725
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "random_forest_grid_search",
+            "mae": 0.723502,
+            "rmse": 1.14758,
+            "r2": 0.906223
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "linear_regression",
+            "mae": 2.447696,
+            "rmse": 3.301193,
+            "r2": 0.223978
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "random_forest",
+            "mae": 2.279597,
+            "rmse": 3.190733,
+            "r2": 0.275041
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "gradient_boosting",
+            "mae": 2.386378,
+            "rmse": 3.150244,
+            "r2": 0.293323
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "random_forest_grid_search",
+            "mae": 2.307931,
+            "rmse": 3.176739,
+            "r2": 0.281386
+        }
+    ],
+    "test_metrics": {
+        "mae": 0.925801,
+        "rmse": 1.580415,
+        "r2": 0.831716
+    },
+    "input_features": [
+        "subject",
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "G1",
+        "G2"
+    ],
+    "total_input_features": 33,
+    "total_features_after_preprocessing": 60
+}
