@@ -1,4 +1,6 @@
-"""Tạo bộ biểu đồ đánh giá mô hình và lưu dưới dạng PNG."""
+"""
+Tạo bộ biểu đồ đánh giá mô hình và lưu dưới dạng PNG.
+"""
 
 from __future__ import annotations
 
@@ -16,11 +18,7 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 
 from src.evaluation.compare import build_result_label, results_to_dataframe
-from src.evaluation.metrics import (
-    EvaluationResult,
-    RegressionMetrics,
-    calculate_pass_fail_metrics,
-)
+from src.evaluation.metrics import EvaluationResult, RegressionMetrics
 
 LOGGER = logging.getLogger(__name__)
 
@@ -29,13 +27,11 @@ DEFAULT_FIGSIZE = (10, 6)
 
 
 def _prepare_output_directory(output_dir: Path) -> None:
-    """Tạo thư mục chứa biểu đồ nếu chưa tồn tại."""
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
 
 def _save_figure(fig: plt.Figure, output_path: Path) -> Path:
-    """Lưu figure với cấu hình đồng nhất và giải phóng bộ nhớ."""
 
     fig.tight_layout()
     fig.savefig(
@@ -51,7 +47,6 @@ def plot_model_comparison(
     results: list[EvaluationResult],
     output_dir: Path,
 ) -> list[Path]:
-    """Vẽ riêng MAE, RMSE và R² để tránh trộn các thang đo."""
 
     _prepare_output_directory(output_dir)
     dataframe = results_to_dataframe(results)
@@ -108,7 +103,6 @@ def plot_actual_vs_predicted(
     metrics: RegressionMetrics,
     output_path: Path,
 ) -> Path:
-    """Vẽ điểm dự đoán so với điểm thực tế cùng đường lý tưởng y=x."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -158,7 +152,6 @@ def plot_score_distribution(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """So sánh phân phối điểm thực tế và điểm dự đoán."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -192,7 +185,6 @@ def plot_residuals_vs_predicted(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """Kiểm tra residual có phân bố ngẫu nhiên quanh đường 0 hay không."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -220,7 +212,6 @@ def plot_residual_distribution(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """Vẽ phân phối residual và đánh dấu sai số trung bình."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -250,7 +241,6 @@ def plot_absolute_error_by_score(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """Cho biết model thường sai nhiều ở vùng điểm thực tế nào."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -295,65 +285,10 @@ def plot_absolute_error_by_score(
     return _save_figure(fig, output_path)
 
 
-def plot_pass_fail_confusion_matrix(
-    y_true: pd.Series | np.ndarray,
-    y_pred: np.ndarray,
-    output_path: Path,
-    pass_threshold: float = 10.0,
-) -> Path:
-    """Đánh giá quy đổi Đạt/Trượt từ điểm G3 dự đoán."""
-
-    true_values = np.asarray(y_true, dtype=float).reshape(-1)
-    predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
-    pass_fail_metrics = calculate_pass_fail_metrics(
-        y_true=true_values,
-        y_pred=predicted_values,
-        threshold=pass_threshold,
-    )
-    matrix = np.asarray(pass_fail_metrics.confusion_matrix, dtype=int)
-
-    fig, ax = plt.subplots(figsize=(7, 6))
-    image = ax.imshow(matrix, interpolation="nearest", cmap="Blues")
-    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
-    ax.set_title("Ma trận nhầm lẫn Đạt/Trượt", fontweight="bold")
-    ax.set_xlabel("Nhãn dự đoán")
-    ax.set_ylabel("Nhãn thực tế")
-    ax.set_xticks([0, 1], labels=["Trượt", "Đạt"])
-    ax.set_yticks([0, 1], labels=["Trượt", "Đạt"])
-
-    threshold = matrix.max() / 2 if matrix.size else 0
-    for row in range(matrix.shape[0]):
-        for column in range(matrix.shape[1]):
-            value = int(matrix[row, column])
-            ax.text(
-                column,
-                row,
-                str(value),
-                ha="center",
-                va="center",
-                color="white" if value > threshold else "black",
-                fontsize=13,
-                fontweight="bold",
-            )
-
-    ax.text(
-        0.5,
-        -0.16,
-        f"Ngưỡng đạt: G3 ≥ {pass_threshold:g} | "
-        f"Accuracy = {pass_fail_metrics.accuracy:.3f} | "
-        f"F1 = {pass_fail_metrics.f1:.3f}",
-        transform=ax.transAxes,
-        ha="center",
-    )
-
-    return _save_figure(fig, output_path)
-
-
 def save_model_comparison(
     results: list[EvaluationResult],
     output_path: Path,
 ) -> Path:
-    """Lưu bảng so sánh model dưới dạng CSV để dùng trong báo cáo."""
 
     dataframe = results_to_dataframe(results)
     dataframe["display_name"] = [
@@ -372,7 +307,6 @@ def _extract_feature_importance(
     fitted_pipeline: Pipeline,
     feature_names: list[str],
 ) -> pd.DataFrame | None:
-    """Lấy feature importance từ model cây hoặc hệ số tuyệt đối từ model tuyến tính."""
 
     if "model" not in fitted_pipeline.named_steps:
         raise ValueError("Pipeline không có bước 'model'.")
@@ -416,7 +350,6 @@ def plot_feature_importance(
     output_path: Path,
     top_n: int = 20,
 ) -> Path | None:
-    """Vẽ top đặc trưng ảnh hưởng mạnh nhất đến dự đoán."""
 
     importance_df = _extract_feature_importance(
         fitted_pipeline=fitted_pipeline,
@@ -454,7 +387,6 @@ def save_test_predictions(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """Lưu dữ liệu dùng trong biểu đồ để dễ kiểm chứng và làm báo cáo."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -481,7 +413,6 @@ def generate_evaluation_artifacts(
     output_dir: Path,
     predictions_path: Path,
 ) -> dict[str, Any]:
-    """Tạo toàn bộ biểu đồ và file dự đoán sau khi huấn luyện."""
 
     _prepare_output_directory(output_dir)
     generated_paths: list[Path] = []
@@ -526,13 +457,6 @@ def generate_evaluation_artifacts(
             y_true=y_test,
             y_pred=y_pred,
             output_path=output_dir / "absolute_error_by_score.png",
-        )
-    )
-    generated_paths.append(
-        plot_pass_fail_confusion_matrix(
-            y_true=y_test,
-            y_pred=y_pred,
-            output_path=output_dir / "pass_fail_confusion_matrix.png",
         )
     )
 

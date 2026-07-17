@@ -7,6 +7,9 @@ from typing import Final
 # ==================================================
 RANDOM_STATE: Final[int] = 42
 TARGET_COLUMN: Final[str] = "G3"
+GRADE_MIN: Final[float] = 0.0
+GRADE_MAX: Final[float] = 20.0
+PREDICTION_DECIMALS: Final[int] = 2
 
 SCENARIO_WITH_PREVIOUS_GRADES: Final[str] = "A_with_G1_G2"
 SCENARIO_WITHOUT_PREVIOUS_GRADES: Final[str] = "B_without_G1_G2"
@@ -31,18 +34,14 @@ RANDOM_FOREST_BASE_PARAMS: Final[dict[str, object]] = {
 
 RANDOM_FOREST_TUNING_PARAMS: Final[dict[str, object]] = {
     "random_state": RANDOM_STATE,
-    # GridSearchCV chạy ở tầng ngoài; để 1 nhằm tránh nested parallelism.
     "n_jobs": 1,
 }
 
 RANDOM_FOREST_GRID: Final[dict[str, list[object]]] = {
-    # Grid vừa đủ để so sánh, tránh hàng trăm lượt fit gây treo máy.
     "model__n_estimators": [200, 300],
     "model__max_depth": [None, 10],
     "model__min_samples_split": [2, 5],
     "model__min_samples_leaf": [1],
-    # Bao gồm 1.0 (mặc định của RandomForestRegressor) để GridSearch không
-    # loại bỏ cấu hình baseline mạnh, đồng thời vẫn so sánh với "sqrt".
     "model__max_features": [1.0, "sqrt"],
 }
 
