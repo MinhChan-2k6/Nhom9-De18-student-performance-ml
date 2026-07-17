@@ -8,9 +8,9 @@
         {
             "scenario": "B_without_G1_G2",
             "model": "linear_regression",
-            "mae": 2.917968,
-            "rmse": 4.099846,
-            "r2": 0.163647
+            "mae": 2.916233,
+            "rmse": 4.098076,
+            "r2": 0.164369
         },
         {
             "scenario": "B_without_G1_G2",
@@ -25,8 +25,45 @@
             "mae": 2.858986,
             "rmse": 3.99676,
             "r2": 0.205176
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "random_forest_grid_search",
+            "mae": 2.830153,
+            "rmse": 3.941239,
+            "r2": 0.227105,
+            "tuning": {
+                "method": "GridSearchCV",
+                "scoring": "neg_root_mean_squared_error",
+                "cv_folds": 3,
+                "candidate_count": 16,
+                "total_fits": 48,
+                "best_cv_rmse": 3.115348,
+                "best_params": {
+                    "model__max_depth": null,
+                    "model__max_features": "sqrt",
+                    "model__min_samples_leaf": 1,
+                    "model__min_samples_split": 2,
+                    "model__n_estimators": 300
+                }
+            }
         }
     ],
+    "hyperparameter_tuning": {
+        "method": "GridSearchCV",
+        "scoring": "neg_root_mean_squared_error",
+        "cv_folds": 3,
+        "candidate_count": 16,
+        "total_fits": 48,
+        "best_cv_rmse": 3.115348,
+        "best_params": {
+            "model__max_depth": null,
+            "model__max_features": "sqrt",
+            "model__min_samples_leaf": 1,
+            "model__min_samples_split": 2,
+            "model__n_estimators": 300
+        }
+    },
     "test_metrics": {
         "mae": 2.112764,
         "rmse": 2.77514,

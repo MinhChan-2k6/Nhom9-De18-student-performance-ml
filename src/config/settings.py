@@ -41,7 +41,9 @@ RANDOM_FOREST_GRID: Final[dict[str, list[object]]] = {
     "model__max_depth": [None, 10],
     "model__min_samples_split": [2, 5],
     "model__min_samples_leaf": [1],
-    "model__max_features": ["sqrt"],
+    # Bao gồm 1.0 (mặc định của RandomForestRegressor) để GridSearch không
+    # loại bỏ cấu hình baseline mạnh, đồng thời vẫn so sánh với "sqrt".
+    "model__max_features": [1.0, "sqrt"],
 }
 
 GRID_SEARCH_SCORING: Final[str] = "neg_root_mean_squared_error"

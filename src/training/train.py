@@ -31,6 +31,7 @@ from src.evaluation.plots import generate_evaluation_artifacts
 from src.features.build_features import get_scenario_features, split_features_target
 from src.features.transform import build_preprocessor, get_feature_names
 from src.models.model_registry import build_candidate_models, build_pipeline
+from src.models.random_forest import build_random_forest_grid_search
 from src.utils.io import read_csv, save_joblib, save_json, save_text
 
 
@@ -120,7 +121,71 @@ def train_scenario(
             result.r2,
         )
 
+    tuned_result = train_tuned_random_forest(
+        train_df=train_df,
+        valid_df=valid_df,
+        scenario_name=scenario_name,
+        feature_columns=feature_columns,
+    )
+    results.append(tuned_result)
+
     return results
+
+
+def train_tuned_random_forest(
+    train_df: pd.DataFrame,
+    valid_df: pd.DataFrame,
+    scenario_name: str,
+    feature_columns: list[str],
+) -> EvaluationResult:
+    """Tinh chỉnh Random Forest bằng GridSearchCV và đánh giá trên validation."""
+
+    X_train, y_train = split_features_target(train_df, feature_columns)
+    X_valid, y_valid = split_features_target(valid_df, feature_columns)
+    preprocessor = build_preprocessor(train_df, feature_columns)
+    grid_search = build_random_forest_grid_search(preprocessor)
+
+    candidate_count = 1
+    for values in grid_search.param_grid.values():
+        candidate_count *= len(values)
+    cv_folds = int(grid_search.cv)
+
+    LOGGER.info(
+        "Đang GridSearchCV %s | %d cấu hình x %d folds",
+        scenario_name,
+        candidate_count,
+        cv_folds,
+    )
+    grid_search.fit(X_train, y_train)
+
+    tuning = {
+        "method": "GridSearchCV",
+        "scoring": str(grid_search.scoring),
+        "cv_folds": cv_folds,
+        "candidate_count": candidate_count,
+        "total_fits": candidate_count * cv_folds,
+        "best_cv_rmse": round(float(-grid_search.best_score_), 6),
+        "best_params": dict(grid_search.best_params_),
+    }
+
+    result = evaluate_pipeline(
+        estimator=grid_search.best_estimator_,
+        X_valid=X_valid,
+        y_valid=y_valid,
+        scenario_name=scenario_name,
+        model_name="random_forest_grid_search",
+        tuning=tuning,
+    )
+
+    LOGGER.info(
+        "%s | random_forest_grid_search | CV RMSE=%.4f | "
+        "validation RMSE=%.4f | best_params=%s",
+        scenario_name,
+        tuning["best_cv_rmse"],
+        result.rmse,
+        tuning["best_params"],
+    )
+    return result
 
 
 def refit_best_pipeline(
@@ -176,6 +241,24 @@ def write_model_card(
         if "G1" in input_features and "G2" in input_features
         else "Không sử dụng `G1`, `G2`; phù hợp cho dự báo sớm."
     )
+    tuning = metrics_payload.get("hyperparameter_tuning")
+    tuning_section = ""
+
+    if tuning:
+        best_params = ", ".join(
+            f"`{name}`={value}"
+            for name, value in tuning.get("best_params", {}).items()
+        )
+        tuning_section = f"""
+## 3. Tinh chỉnh siêu tham số
+
+- Phương pháp: `{tuning.get('method', 'N/A')}`
+- Số fold: `{tuning.get('cv_folds', 'N/A')}`
+- Số cấu hình: `{tuning.get('candidate_count', 'N/A')}`
+- Tổng lượt fit: `{tuning.get('total_fits', 'N/A')}`
+- CV RMSE tốt nhất: `{tuning.get('best_cv_rmse', 'N/A')}`
+- Tham số tốt nhất: {best_params or 'N/A'}
+"""
 
     model_card = f"""# Model Card — Student Performance Regression
 
@@ -197,7 +280,9 @@ def write_model_card(
 - F1 Đạt/Trượt: `{pass_fail_metrics.get('f1', 'N/A')}`
 - Ngưỡng Đạt: `G3 >= {pass_fail_metrics.get('threshold', 10)}`
 
-## 3. Đặc trưng và output
+{tuning_section}
+
+## 4. Đặc trưng và output
 
 - Số cột đầu vào trước tiền xử lý: `{len(input_features)}`
 - Danh sách đầu vào: `{', '.join(input_features)}`
@@ -206,7 +291,7 @@ def write_model_card(
 - Metrics: `{paths.metrics.relative_to(ARTIFACT_DIR.parent).as_posix()}`
 - Biểu đồ: `{paths.plots.relative_to(ARTIFACT_DIR.parent).as_posix()}`
 
-## 4. Lưu ý
+## 5. Lưu ý
 
 - MAE và RMSE càng thấp càng tốt; R² càng gần 1 càng tốt.
 - Đạt/Trượt chỉ là kết quả quy đổi từ điểm G3 dự đoán.
@@ -275,6 +360,14 @@ def train_and_save_scenario(
         "best_scenario": best_result.scenario,
         "selection_metric": "validation_rmse",
         "validation_results": [result.to_dict() for result in scenario_results],
+        "hyperparameter_tuning": next(
+            (
+                result.tuning
+                for result in scenario_results
+                if result.tuning is not None
+            ),
+            None,
+        ),
         "test_metrics": test_metrics.to_dict(),
         "test_pass_fail_metrics": pass_fail_metrics.to_dict(),
         "input_features": input_features,
@@ -312,6 +405,7 @@ def train_and_save_scenario(
             "rmse": best_result.rmse,
             "r2": best_result.r2,
         },
+        "hyperparameter_tuning": metrics_payload["hyperparameter_tuning"],
         "test_metrics": test_metrics.to_dict(),
     }
 
