@@ -1,16 +1,16 @@
 {
     "task": "regression",
     "target": "G3",
-    "best_model": "random_forest",
+    "best_model": "random_forest_grid_search",
     "best_scenario": "A_with_G1_G2",
     "selection_metric": "validation_rmse",
     "validation_results": [
         {
             "scenario": "A_with_G1_G2",
             "model": "linear_regression",
-            "mae": 1.203436,
-            "rmse": 2.128371,
-            "r2": 0.774602
+            "mae": 1.203455,
+            "rmse": 2.12839,
+            "r2": 0.774598
         },
         {
             "scenario": "A_with_G1_G2",
@@ -25,25 +25,62 @@
             "mae": 1.132185,
             "rmse": 1.900339,
             "r2": 0.820313
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "random_forest_grid_search",
+            "mae": 1.135425,
+            "rmse": 1.886236,
+            "r2": 0.82297,
+            "tuning": {
+                "method": "GridSearchCV",
+                "scoring": "neg_root_mean_squared_error",
+                "cv_folds": 3,
+                "candidate_count": 16,
+                "total_fits": 48,
+                "best_cv_rmse": 1.594842,
+                "best_params": {
+                    "model__max_depth": null,
+                    "model__max_features": 1.0,
+                    "model__min_samples_leaf": 1,
+                    "model__min_samples_split": 2,
+                    "model__n_estimators": 200
+                }
+            }
         }
     ],
+    "hyperparameter_tuning": {
+        "method": "GridSearchCV",
+        "scoring": "neg_root_mean_squared_error",
+        "cv_folds": 3,
+        "candidate_count": 16,
+        "total_fits": 48,
+        "best_cv_rmse": 1.594842,
+        "best_params": {
+            "model__max_depth": null,
+            "model__max_features": 1.0,
+            "model__min_samples_leaf": 1,
+            "model__min_samples_split": 2,
+            "model__n_estimators": 200
+        }
+    },
     "test_metrics": {
-        "mae": 0.976983,
-        "rmse": 1.450978,
-        "r2": 0.854988
+        "mae": 0.966044,
+        "rmse": 1.425448,
+        "r2": 0.860046
     },
     "test_pass_fail_metrics": {
         "threshold": 10.0,
-        "accuracy": 0.810127,
-        "f1": 0.867257,
+        "accuracy": 0.816456,
+        "f1": 0.872247,
         "confusion_matrix": [
             [
                 30,
                 3
             ],
             [
-                27,
-                98
+                26,
+                99
             ]
         ]
     },

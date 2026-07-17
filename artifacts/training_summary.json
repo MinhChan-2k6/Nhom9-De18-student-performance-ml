@@ -5,7 +5,7 @@
     "scenarios": [
         {
             "scenario": "A_with_G1_G2",
-            "best_model": "random_forest",
+            "best_model": "random_forest_grid_search",
             "artifact_directory": "artifacts/Model_Have_A_B",
             "model_path": "artifacts/Model_Have_A_B/best_regression_model.pkl",
             "total_input_features": 33,
@@ -45,14 +45,29 @@
                 "G2"
             ],
             "validation_metrics": {
-                "mae": 1.1425272331154686,
-                "rmse": 1.8994189380192112,
-                "r2": 0.8204869002223327
+                "mae": 1.135424836601307,
+                "rmse": 1.886236180361456,
+                "r2": 0.8229700443815281
+            },
+            "hyperparameter_tuning": {
+                "method": "GridSearchCV",
+                "scoring": "neg_root_mean_squared_error",
+                "cv_folds": 3,
+                "candidate_count": 16,
+                "total_fits": 48,
+                "best_cv_rmse": 1.594842,
+                "best_params": {
+                    "model__max_depth": null,
+                    "model__max_features": 1.0,
+                    "model__min_samples_leaf": 1,
+                    "model__min_samples_split": 2,
+                    "model__n_estimators": 200
+                }
             },
             "test_metrics": {
-                "mae": 0.976983,
-                "rmse": 1.450978,
-                "r2": 0.854988
+                "mae": 0.966044,
+                "rmse": 1.425448,
+                "r2": 0.860046
             }
         },
         {
@@ -98,6 +113,21 @@
                 "mae": 2.8770806100217863,
                 "rmse": 3.901954019547239,
                 "r2": 0.2424367240140628
+            },
+            "hyperparameter_tuning": {
+                "method": "GridSearchCV",
+                "scoring": "neg_root_mean_squared_error",
+                "cv_folds": 3,
+                "candidate_count": 16,
+                "total_fits": 48,
+                "best_cv_rmse": 3.115348,
+                "best_params": {
+                    "model__max_depth": null,
+                    "model__max_features": "sqrt",
+                    "model__min_samples_leaf": 1,
+                    "model__min_samples_split": 2,
+                    "model__n_estimators": 300
+                }
             },
             "test_metrics": {
                 "mae": 2.112764,

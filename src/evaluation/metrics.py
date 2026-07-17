@@ -62,6 +62,7 @@ class EvaluationResult:
     model: str
     metrics: RegressionMetrics
     estimator: Pipeline
+    tuning: dict[str, Any] | None = None
 
     @property
     def mae(self) -> float:
@@ -78,11 +79,16 @@ class EvaluationResult:
     def to_dict(self) -> dict[str, Any]:
         """Dữ liệu gọn để ghi vào metrics.json."""
 
-        return {
+        payload = {
             "scenario": self.scenario,
             "model": self.model,
             **self.metrics.to_dict(),
         }
+
+        if self.tuning is not None:
+            payload["tuning"] = self.tuning
+
+        return payload
 
 
 def _as_1d_array(values: pd.Series | np.ndarray) -> np.ndarray:
@@ -168,6 +174,7 @@ def evaluate_pipeline(
     y_valid: pd.Series,
     scenario_name: str,
     model_name: str,
+    tuning: dict[str, Any] | None = None,
 ) -> EvaluationResult:
     """Đánh giá một pipeline trên validation set."""
 
@@ -182,4 +189,5 @@ def evaluate_pipeline(
         model=model_name,
         metrics=metrics,
         estimator=estimator,
+        tuning=tuning,
     )
