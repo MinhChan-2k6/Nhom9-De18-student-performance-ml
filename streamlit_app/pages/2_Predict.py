@@ -215,10 +215,10 @@ with input_column:
             )
 
             failures = st.selectbox(
-                "Số lần trượt trước đây (*)",
+                "Số lần học lại trước đây (*)",
                 options=[0, 1, 2, 3],
                 index=None,
-                placeholder="Chọn số lần trượt"
+                placeholder="Chọn số lần học lại"
             )
 
             absences_text = st.text_input(
@@ -622,7 +622,7 @@ if submitted:
         "Giới tính": sex,
         "Tuổi": age,
         "Thời gian tự học": studytime,
-        "Số lần trượt": failures,
+        "Số lần học lại": failures,
         "Internet tại nhà": internet,
         "Hỗ trợ gia đình": family_support
     }
@@ -763,11 +763,6 @@ if submitted:
                         prediction_data["predicted_g3"]
                     )
 
-                    converted_result = prediction_data.get(
-                        "converted_result",
-                        "Đạt" if predicted_g3 >= 10 else "Trượt"
-                    )
-
                     model_name = prediction_data.get(
                         "model",
                         "Không xác định"
@@ -778,20 +773,12 @@ if submitted:
                         prediction_mode_value
                     )
 
-                    status_class = (
-                        "prediction-pass"
-                        if converted_result == "Đạt"
-                        else "prediction-fail"
-                    )
-
                     result_card_html = f"""
 <div class="prediction-result-card">
     <div class="prediction-result-icon">🎯</div>
     <p class="prediction-result-label">Điểm G3 dự đoán</p>
-    <div class="prediction-result-score">{predicted_g3:.2f}</div>
-    <span class="prediction-result-status {status_class}">
-        Kết quả quy đổi: {converted_result}
-    </span>
+    <div class="prediction-result-score">{predicted_g3:.2f} / 20</div>
+    <span class="prediction-result-status">Đầu ra hồi quy</span>
 </div>
 """
 
@@ -805,8 +792,8 @@ if submitted:
                     st.write("**Chế độ:**", prediction_mode)
                     st.write("**Model:**", model_name)
                     st.caption(
-                        "Đạt/Trượt chỉ là kết quả quy đổi từ điểm G3. "
-                        "Mô hình chính vẫn là mô hình hồi quy."
+                        "Hệ thống trả về duy nhất điểm G3 dự đoán "
+                        "trên thang từ 0 đến 20."
                     )
 
                     if "prediction_history" not in st.session_state:
@@ -822,7 +809,6 @@ if submitted:
                             ),
                             "Chế độ dự đoán": prediction_mode,
                             "Điểm G3 dự đoán": round(predicted_g3, 2),
-                            "Kết quả quy đổi": converted_result,
                             "Model": model_name,
                             "Scenario": scenario_name,
                             "Thời gian": datetime.now().strftime(

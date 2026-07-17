@@ -283,17 +283,6 @@ h3 {
     font-weight: 700;
 }
 
-/* Kết quả đạt */
-.prediction-pass {
-    background-color: #dcfce7;
-    color: #166534;
-}
-
-/* Kết quả trượt */
-.prediction-fail {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
 
 /* Card nhóm thông tin */
 .form-group-heading {
