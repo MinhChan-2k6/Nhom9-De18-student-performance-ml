@@ -52,11 +52,11 @@ def predict_student(
 }
 
     if payload.prediction_mode == "with_g1_g2":
-        if features.get("G1") is None or features.get("G2") is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Chế độ có G1 và G2 yêu cầu nhập đủ hai điểm.",
-            )
+     if features.get("G1") is None or features.get("G2") is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Chế độ có G1 và G2 yêu cầu nhập đủ hai điểm.",
+        )
 
     try:
         service = get_prediction_service(payload.prediction_mode)
