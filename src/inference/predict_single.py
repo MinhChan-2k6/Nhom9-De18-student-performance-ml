@@ -27,8 +27,7 @@ def predict_single(
     Returns
     -------
     dict[str, Any]
-        Kết quả gồm ``predicted_g3``, ``converted_result``, ``model`` và
-        ``scenario``.
+        Kết quả gồm ``predicted_g3``, ``model`` và ``scenario``.
     """
 
     service = get_prediction_service(prediction_mode)

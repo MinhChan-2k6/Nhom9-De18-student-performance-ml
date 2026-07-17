@@ -1,11 +1,10 @@
-"""Dịch vụ nạp model và thực hiện dự đoán điểm G3."""
+"""Dịch vụ nạp model hồi quy và dự đoán điểm G3."""
 
 from __future__ import annotations
 
 from functools import lru_cache
 from typing import Any, Literal, Mapping
 
-import numpy as np
 import pandas as pd
 
 from src.config.paths import get_scenario_artifact_paths
@@ -13,6 +12,7 @@ from src.config.settings import (
     SCENARIO_WITH_PREVIOUS_GRADES,
     SCENARIO_WITHOUT_PREVIOUS_GRADES,
 )
+from src.utils.helpers import normalize_grade_scores, validate_dataframe
 from src.utils.io import load_joblib, load_json
 
 PredictionMode = Literal["with_g1_g2", "early_prediction"]
@@ -24,7 +24,6 @@ MODE_TO_SCENARIO: dict[PredictionMode, str] = {
 
 PREDICTION_OUTPUT_COLUMNS: tuple[str, ...] = (
     "predicted_g3",
-    "converted_result",
     "model",
     "scenario",
 )
@@ -57,6 +56,9 @@ class PredictionService:
         self.best_model = self.metrics.get("best_model", "unknown")
         self.input_features = self.metrics.get("input_features", [])
 
+        if self.metrics.get("task") not in (None, "regression"):
+            raise ValueError("Artifact hiện tại không phải model hồi quy.")
+
         if self.best_scenario != self.scenario:
             raise ValueError(
                 "Scenario trong metrics.json không khớp với thư mục model."
@@ -75,76 +77,28 @@ class PredictionService:
     def _prepare_input_frame(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """Kiểm tra và sắp xếp DataFrame đúng thứ tự đặc trưng của model."""
 
-        if not isinstance(dataframe, pd.DataFrame):
-            raise TypeError("Dữ liệu dự đoán phải là pandas.DataFrame.")
-
-        if dataframe.empty:
-            raise ValueError("Dữ liệu dự đoán không có dòng nào.")
-
-        duplicate_columns = dataframe.columns[
-            dataframe.columns.duplicated()
-        ].tolist()
-        if duplicate_columns:
-            raise ValueError(
-                "Dữ liệu có tên cột bị trùng: "
-                + ", ".join(map(str, duplicate_columns))
-            )
-
-        missing_features = [
-            feature
-            for feature in self.input_features
-            if feature not in dataframe.columns
-        ]
-        if missing_features:
-            raise ValueError(
-                "Thiếu đặc trưng bắt buộc: " + ", ".join(missing_features)
-            )
-
-        input_frame = dataframe.loc[:, self.input_features].copy()
-        missing_value_counts = input_frame.isna().sum()
-        columns_with_missing_values = missing_value_counts[
-            missing_value_counts > 0
-        ]
-
-        if not columns_with_missing_values.empty:
-            details = ", ".join(
-                f"{column} ({int(count)} ô)"
-                for column, count in columns_with_missing_values.items()
-            )
-            raise ValueError(
-                "Các đặc trưng bắt buộc đang có dữ liệu thiếu: " + details
-            )
-
-        return input_frame
+        return validate_dataframe(
+            dataframe,
+            self.input_features,
+            context="Dữ liệu dự đoán",
+        )
 
     def predict_frame(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-        """Dự đoán nhiều dòng và trả về riêng các cột kết quả."""
+        """Dự đoán nhiều dòng và trả về các cột kết quả hồi quy."""
 
         input_frame = self._prepare_input_frame(dataframe)
-        raw_scores = np.asarray(
-            self.model.predict(input_frame),
-            dtype=float,
-        ).reshape(-1)
+        predicted_scores = normalize_grade_scores(
+            self.model.predict(input_frame)
+        )
 
-        if raw_scores.size != len(input_frame):
+        if predicted_scores.size != len(input_frame):
             raise RuntimeError(
                 "Số lượng kết quả dự đoán không khớp số dòng đầu vào."
             )
 
-        if not np.isfinite(raw_scores).all():
-            raise ValueError("Model trả về điểm dự đoán không hợp lệ.")
-
-        clipped_scores = np.clip(raw_scores, 0.0, 20.0)
-        rounded_scores = np.round(clipped_scores, 2)
-
         return pd.DataFrame(
             {
-                "predicted_g3": rounded_scores,
-                "converted_result": np.where(
-                    clipped_scores >= 10.0,
-                    "Đạt",
-                    "Trượt",
-                ),
+                "predicted_g3": predicted_scores,
                 "model": self.best_model,
                 "scenario": self.best_scenario,
             },
@@ -152,7 +106,7 @@ class PredictionService:
         )
 
     def predict(self, features: Mapping[str, Any]) -> dict[str, Any]:
-        """Dự đoán một học sinh từ mapping tên đặc trưng và giá trị."""
+        """Dự đoán điểm G3 của một học sinh từ mapping đặc trưng."""
 
         if not isinstance(features, Mapping):
             raise TypeError("features phải là một mapping tên cột và giá trị.")
@@ -161,7 +115,6 @@ class PredictionService:
 
         return {
             "predicted_g3": float(result["predicted_g3"]),
-            "converted_result": str(result["converted_result"]),
             "model": str(result["model"]),
             "scenario": str(result["scenario"]),
         }

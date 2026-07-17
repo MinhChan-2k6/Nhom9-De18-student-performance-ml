@@ -7,6 +7,9 @@ from typing import Final
 # ==================================================
 RANDOM_STATE: Final[int] = 42
 TARGET_COLUMN: Final[str] = "G3"
+GRADE_MIN: Final[float] = 0.0
+GRADE_MAX: Final[float] = 20.0
+PREDICTION_DECIMALS: Final[int] = 2
 
 SCENARIO_WITH_PREVIOUS_GRADES: Final[str] = "A_with_G1_G2"
 SCENARIO_WITHOUT_PREVIOUS_GRADES: Final[str] = "B_without_G1_G2"
