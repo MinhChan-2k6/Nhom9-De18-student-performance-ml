@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> origin/MinhChan
 from __future__ import annotations
 
 from typing import Final
@@ -36,24 +31,7 @@ RANDOM_FOREST_BASE_PARAMS: Final[dict[str, object]] = {
 
 RANDOM_FOREST_TUNING_PARAMS: Final[dict[str, object]] = {
     "random_state": RANDOM_STATE,
-<<<<<<< HEAD
-    "n_jobs": -1,
-}
-
-RANDOM_FOREST_GRID: Final[dict[str, list[object]]] = {
-    "model__n_estimators": [200, 400],
-    "model__max_depth": [None, 10, 20],
-    "model__min_samples_split": [2, 5],
-    "model__min_samples_leaf": [1, 2],
-    "model__max_features": ["sqrt", 0.8],
-}
-
-GRID_SEARCH_SCORING: Final[str] = "neg_root_mean_squared_error"
-GRID_SEARCH_CV: Final[int] = 5
-GRID_SEARCH_N_JOBS: Final[int] = -1
-GRID_SEARCH_VERBOSE: Final[int] = 1
-=======
-    # GridSearchCV đã chạy song song ở tầng ngoài; để 1 tránh nested parallelism.
+    # GridSearchCV chạy ở tầng ngoài; để 1 nhằm tránh nested parallelism.
     "n_jobs": 1,
 }
 
@@ -70,15 +48,9 @@ GRID_SEARCH_SCORING: Final[str] = "neg_root_mean_squared_error"
 GRID_SEARCH_CV: Final[int] = 3
 GRID_SEARCH_N_JOBS: Final[int] = 1
 GRID_SEARCH_VERBOSE: Final[int] = 0
->>>>>>> origin/MinhChan
 
 # ==================================================
 # Cấu hình logging
 # ==================================================
 LOG_LEVEL: Final[str] = "INFO"
-<<<<<<< HEAD
 LOG_FORMAT: Final[str] = "%(asctime)s | %(levelname)s | %(message)s"
-=======
-LOG_FORMAT: Final[str] = "%(asctime)s | %(levelname)s | %(message)s"
->>>>>>> Stashed changes
->>>>>>> origin/MinhChan
