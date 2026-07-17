@@ -1,0 +1,16 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/
+
+notebooks/
+tests/
+_BaoCao/
+data/
+outputs/
+
+.env
+*.log
