@@ -1,3 +1,5 @@
+<<<<<<< Updated upstream
+=======
 from __future__ import annotations
 
 import json
@@ -9,36 +11,41 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression
+from sklearn.base import clone
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
+from src.config.paths import (
+    ARTIFACT_DIR,
+    FEATURE_NAMES_PATH,
+    METRICS_PATH,
+    MODEL_CARD_PATH,
+    MODEL_PATH,
+    PREPROCESSOR_PATH,
+    TEST_PATH,
+    TRAIN_PATH,
+    VALID_PATH,
+)
+from src.config.settings import (
+    LOG_FORMAT,
+    LOG_LEVEL,
+    SCENARIOS,
+    TARGET_COLUMN,
+)
 
-# ==================================================
-# CẤU HÌNH CHUNG
-# ==================================================
-
-RANDOM_STATE = 42
-TARGET_COLUMN = "G3"
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-DATA_DIR = PROJECT_ROOT / "data" / "processed"
-TRAIN_PATH = DATA_DIR / "train.csv"
-VALID_PATH = DATA_DIR / "valid.csv"
-TEST_PATH = DATA_DIR / "test.csv"
-
-ARTIFACT_DIR = PROJECT_ROOT / "artifacts"
-MODEL_PATH = ARTIFACT_DIR / "best_regression_model.pkl"
-PREPROCESSOR_PATH = ARTIFACT_DIR / "preprocessor.pkl"
-METRICS_PATH = ARTIFACT_DIR / "metrics.json"
-FEATURE_NAMES_PATH = ARTIFACT_DIR / "feature_names.json"
-MODEL_CARD_PATH = ARTIFACT_DIR / "model_card.md"
+from src.features.build_features import (
+    get_scenario_features,
+    split_features_target,
+)
+from src.features.transform import (
+    build_preprocessor,
+    get_feature_names,
+)
+from src.models.model_registry import (
+    build_candidate_models,
+    build_pipeline,
+)
+from src.models.random_forest import build_random_forest_grid_search
 
 
 # ==================================================
@@ -46,8 +53,8 @@ MODEL_CARD_PATH = ARTIFACT_DIR / "model_card.md"
 # ==================================================
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
+    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
+    format=LOG_FORMAT
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -136,142 +143,6 @@ def validate_dataset_compatibility(
         )
 
 
-# ==================================================
-# SCENARIO
-# ==================================================
-
-def get_scenario_features(
-    dataframe: pd.DataFrame,
-    scenario_name: str
-) -> list[str]:
-    """
-    Scenario A: sử dụng G1 và G2.
-    Scenario B: loại bỏ G1 và G2 để dự báo sớm.
-    """
-
-    feature_columns = [
-        column
-        for column in dataframe.columns
-        if column != TARGET_COLUMN
-    ]
-
-    if scenario_name == "A_with_G1_G2":
-        return feature_columns
-
-    if scenario_name == "B_without_G1_G2":
-        return [
-            column
-            for column in feature_columns
-            if column not in {"G1", "G2"}
-        ]
-
-    raise ValueError(
-        f"Scenario không hợp lệ: {scenario_name}"
-    )
-
-
-# ==================================================
-# TIỀN XỬ LÝ
-# ==================================================
-
-def build_preprocessor(
-    dataframe: pd.DataFrame,
-    feature_columns: list[str]
-) -> ColumnTransformer:
-    """Tạo bộ tiền xử lý cho cột số và cột phân loại."""
-
-    feature_df = dataframe[feature_columns]
-
-    numeric_columns = feature_df.select_dtypes(
-        include=["number"]
-    ).columns.tolist()
-
-    categorical_columns = feature_df.select_dtypes(
-        exclude=["number"]
-    ).columns.tolist()
-
-    numeric_pipeline = Pipeline(
-        steps=[
-            (
-                "imputer",
-                SimpleImputer(strategy="median")
-            ),
-            (
-                "scaler",
-                StandardScaler()
-            )
-        ]
-    )
-
-    categorical_pipeline = Pipeline(
-        steps=[
-            (
-                "imputer",
-                SimpleImputer(strategy="most_frequent")
-            ),
-            (
-                "onehot",
-                OneHotEncoder(
-                    handle_unknown="ignore",
-                    sparse_output=False
-                )
-            )
-        ]
-    )
-
-    return ColumnTransformer(
-        transformers=[
-            (
-                "numeric",
-                numeric_pipeline,
-                numeric_columns
-            ),
-            (
-                "categorical",
-                categorical_pipeline,
-                categorical_columns
-            )
-        ],
-        remainder="drop",
-        verbose_feature_names_out=False
-    )
-
-
-# ==================================================
-# MODEL
-# ==================================================
-
-def build_candidate_models() -> dict[str, Any]:
-    """Danh sách model cơ sở để so sánh."""
-
-    return {
-        "linear_regression": LinearRegression(),
-
-        "random_forest": RandomForestRegressor(
-            n_estimators=300,
-            random_state=RANDOM_STATE,
-            n_jobs=-1
-        ),
-
-        "gradient_boosting": GradientBoostingRegressor(
-            random_state=RANDOM_STATE
-        )
-    }
-
-
-def build_pipeline(
-    preprocessor: ColumnTransformer,
-    model: Any
-) -> Pipeline:
-    """Gộp tiền xử lý và model thành một pipeline."""
-
-    return Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            ("model", model)
-        ]
-    )
-
 
 # ==================================================
 # ĐÁNH GIÁ
@@ -357,40 +228,23 @@ def tune_random_forest(
 ) -> EvaluationResult:
     """Tối ưu Random Forest trên tập train, rồi đánh giá trên validation."""
 
-    X_train = train_df[feature_columns]
-    y_train = train_df[TARGET_COLUMN]
+    X_train, y_train = split_features_target(
+        train_df,
+        feature_columns
+    )
 
-    X_valid = valid_df[feature_columns]
-    y_valid = valid_df[TARGET_COLUMN]
+    X_valid, y_valid = split_features_target(
+        valid_df,
+        feature_columns
+    )
 
     preprocessor = build_preprocessor(
         train_df,
         feature_columns
     )
 
-    pipeline = build_pipeline(
-        preprocessor,
-        RandomForestRegressor(
-            random_state=RANDOM_STATE,
-            n_jobs=-1
-        )
-    )
-
-    parameter_grid = {
-        "model__n_estimators": [200, 400],
-        "model__max_depth": [None, 10, 20],
-        "model__min_samples_split": [2, 5],
-        "model__min_samples_leaf": [1, 2],
-        "model__max_features": ["sqrt", 0.8]
-    }
-
-    grid_search = GridSearchCV(
-        estimator=pipeline,
-        param_grid=parameter_grid,
-        scoring="neg_root_mean_squared_error",
-        cv=5,
-        n_jobs=-1,
-        verbose=1
+    grid_search = build_random_forest_grid_search(
+        preprocessor
     )
 
     LOGGER.info(
@@ -436,11 +290,15 @@ def train_scenario(
         scenario_name
     )
 
-    X_train = train_df[feature_columns]
-    y_train = train_df[TARGET_COLUMN]
+    X_train, y_train = split_features_target(
+        train_df,
+        feature_columns
+    )
 
-    X_valid = valid_df[feature_columns]
-    y_valid = valid_df[TARGET_COLUMN]
+    X_valid, y_valid = split_features_target(
+        valid_df,
+        feature_columns
+    )
 
     results: list[EvaluationResult] = []
 
@@ -529,11 +387,15 @@ def refit_best_pipeline(
         best_result.scenario
     )
 
-    X_combined = combined_df[feature_columns]
-    y_combined = combined_df[TARGET_COLUMN]
+    X_combined, y_combined = split_features_target(
+        combined_df,
+        feature_columns
+    )
 
-    # Clone bằng cách tái sử dụng tham số model đã chọn.
-    chosen_model = best_result.estimator.named_steps["model"]
+    # Tạo bản sao sạch của model đã chọn trước khi refit.
+    chosen_model = clone(
+        best_result.estimator.named_steps["model"]
+    )
 
     preprocessor = build_preprocessor(
         combined_df,
@@ -560,8 +422,10 @@ def evaluate_on_test(
 ) -> dict[str, float]:
     """Đánh giá model cuối cùng trên test set."""
 
-    X_test = test_df[feature_columns]
-    y_test = test_df[TARGET_COLUMN]
+    X_test, y_test = split_features_target(
+        test_df,
+        feature_columns
+    )
 
     predictions = pipeline.predict(X_test)
 
@@ -580,22 +444,6 @@ def evaluate_on_test(
 # ==================================================
 # LƯU ARTIFACTS
 # ==================================================
-
-def get_feature_names(
-    fitted_pipeline: Pipeline
-) -> list[str]:
-    """Lấy tên feature sau tiền xử lý."""
-
-    preprocessor = fitted_pipeline.named_steps[
-        "preprocessor"
-    ]
-
-    try:
-        names = preprocessor.get_feature_names_out()
-        return [str(name) for name in names]
-    except AttributeError:
-        return []
-
 
 def save_artifacts(
     final_pipeline: Pipeline,
@@ -719,10 +567,7 @@ def main() -> None:
 
     all_results: list[EvaluationResult] = []
 
-    for scenario_name in [
-        "A_with_G1_G2",
-        "B_without_G1_G2"
-    ]:
+    for scenario_name in SCENARIOS:
         scenario_results = train_scenario(
             train_df=train_df,
             valid_df=valid_df,
@@ -803,3 +648,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+>>>>>>> Stashed changes
