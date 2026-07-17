@@ -8,9 +8,9 @@
         {
             "scenario": "B_without_G1_G2",
             "model": "linear_regression",
-            "mae": 2.916233,
-            "rmse": 4.098076,
-            "r2": 0.164369
+            "mae": 2.917968,
+            "rmse": 4.099846,
+            "r2": 0.163647
         },
         {
             "scenario": "B_without_G1_G2",
