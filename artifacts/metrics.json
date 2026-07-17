@@ -1,133 +1,21 @@
 {
-<<<<<<< Updated upstream
   "task": "regression",
   "target": "G3",
   "best_model": "random_forest_grid_search",
   "best_scenario": "A_with_G1_G2",
+  "selection_metric": "validation_rmse",
   "validation_results": [
-    {
-      "scenario": "A_with_G1_G2",
-      "model": "random_forest_grid_search",
-      "mae": 0.7364483104,
-      "rmse": 1.1658014154,
-      "r2": 0.9032208917
-=======
-    "task": "regression",
-    "target": "G3",
-    "best_model": "random_forest",
-    "best_scenario": "A_with_G1_G2",
-    "selection_metric": "validation_rmse",
-    "validation_results": [
-        {
-            "scenario": "A_with_G1_G2",
-            "model": "linear_regression",
-            "mae": 1.203436,
-            "rmse": 2.128371,
-            "r2": 0.774602
-        },
-        {
-            "scenario": "A_with_G1_G2",
-            "model": "random_forest",
-            "mae": 1.142527,
-            "rmse": 1.899419,
-            "r2": 0.820487
-        },
-        {
-            "scenario": "A_with_G1_G2",
-            "model": "gradient_boosting",
-            "mae": 1.132185,
-            "rmse": 1.900339,
-            "r2": 0.820313
-        },
-        {
-            "scenario": "A_with_G1_G2",
-            "model": "random_forest_grid_search",
-            "mae": 1.136783,
-            "rmse": 1.926634,
-            "r2": 0.815306
-        },
-        {
-            "scenario": "B_without_G1_G2",
-            "model": "linear_regression",
-            "mae": 2.917968,
-            "rmse": 4.099846,
-            "r2": 0.163647
-        },
-        {
-            "scenario": "B_without_G1_G2",
-            "model": "random_forest",
-            "mae": 2.877081,
-            "rmse": 3.901954,
-            "r2": 0.242437
-        },
-        {
-            "scenario": "B_without_G1_G2",
-            "model": "gradient_boosting",
-            "mae": 2.858986,
-            "rmse": 3.99676,
-            "r2": 0.205176
-        },
-        {
-            "scenario": "B_without_G1_G2",
-            "model": "random_forest_grid_search",
-            "mae": 2.8242,
-            "rmse": 3.942246,
-            "r2": 0.22671
-        }
-    ],
-    "test_metrics": {
-        "mae": 0.976983,
-        "rmse": 1.450978,
-        "r2": 0.854988
->>>>>>> Stashed changes
-    },
-    {
-      "scenario": "A_with_G1_G2",
-      "model": "random_forest",
-      "mae": 0.7359309389,
-      "rmse": 1.1673358103,
-      "r2": 0.9029659682
-    },
-    {
-      "scenario": "A_with_G1_G2",
-      "model": "gradient_boosting",
-      "mae": 0.805899489,
-      "rmse": 1.2395300536,
-      "r2": 0.8905926291
-    },
-    {
-      "scenario": "A_with_G1_G2",
-      "model": "linear_regression",
-      "mae": 0.8844033017,
-      "rmse": 1.2773140585,
-      "r2": 0.8838209438
-    },
-    {
-      "scenario": "B_without_G1_G2",
-      "model": "gradient_boosting",
-      "mae": 2.3941404659,
-      "rmse": 3.1549963688,
-      "r2": 0.291189427
-    },
-    {
-      "scenario": "B_without_G1_G2",
-      "model": "random_forest",
-      "mae": 2.3272446707,
-      "rmse": 3.20749717,
-      "r2": 0.2674031899
-    },
-    {
-      "scenario": "B_without_G1_G2",
-      "model": "linear_regression",
-      "mae": 2.4660131369,
-      "rmse": 3.3018216534,
-      "r2": 0.2236819531
-    }
+    {"scenario":"A_with_G1_G2","model":"linear_regression","mae":0.882706,"rmse":1.308979,"r2":0.877989},
+    {"scenario":"A_with_G1_G2","model":"random_forest","mae":0.727898,"rmse":1.178308,"r2":0.901133},
+    {"scenario":"A_with_G1_G2","model":"gradient_boosting","mae":0.785791,"rmse":1.201224,"r2":0.89725},
+    {"scenario":"A_with_G1_G2","model":"random_forest_grid_search","mae":0.723502,"rmse":1.14758,"r2":0.906223},
+    {"scenario":"B_without_G1_G2","model":"linear_regression","mae":2.447696,"rmse":3.301193,"r2":0.223978},
+    {"scenario":"B_without_G1_G2","model":"random_forest","mae":2.279597,"rmse":3.190733,"r2":0.275041},
+    {"scenario":"B_without_G1_G2","model":"gradient_boosting","mae":2.386378,"rmse":3.150244,"r2":0.293323},
+    {"scenario":"B_without_G1_G2","model":"random_forest_grid_search","mae":2.307931,"rmse":3.176739,"r2":0.281386}
   ],
-  "test_metrics": {
-    "mae": 0.9716179418157921,
-    "rmse": 1.6319121806894208,
-    "r2": 0.8205702046167563
-  },
-  "random_state": 42
+  "test_metrics": {"mae":0.925801,"rmse":1.580415,"r2":0.831716},
+  "input_features": ["subject","school","sex","age","address","famsize","Pstatus","Medu","Fedu","Mjob","Fjob","reason","guardian","traveltime","studytime","failures","schoolsup","famsup","paid","activities","nursery","higher","internet","romantic","famrel","freetime","goout","Dalc","Walc","health","absences","G1","G2"],
+  "total_input_features": 33,
+  "total_features_after_preprocessing": 60
 }

@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import requests
 import streamlit as st
 
 from streamlit_app.components.styles import load_css
@@ -13,6 +16,12 @@ st.set_page_config(
 )
 
 load_css()
+
+
+# --------------------------------------------------
+# Cấu hình API
+# --------------------------------------------------
+API_URL = "http://127.0.0.1:8000/predict"
 
 
 # --------------------------------------------------
@@ -739,39 +748,133 @@ if submitted:
         }
 
         with result_column:
-            st.success("Dữ liệu đầu vào hợp lệ.")
+            try:
+                with st.spinner("Đang gửi dữ liệu đến mô hình..."):
+                    response = requests.post(
+                        API_URL,
+                        json=request_payload,
+                        timeout=30
+                    )
 
-            waiting_card_html = """
+                if response.status_code == 200:
+                    prediction_data = response.json()
+
+                    predicted_g3 = float(
+                        prediction_data["predicted_g3"]
+                    )
+
+                    converted_result = prediction_data.get(
+                        "converted_result",
+                        "Đạt" if predicted_g3 >= 10 else "Trượt"
+                    )
+
+                    model_name = prediction_data.get(
+                        "model",
+                        "Không xác định"
+                    )
+
+                    scenario_name = prediction_data.get(
+                        "scenario",
+                        prediction_mode_value
+                    )
+
+                    status_class = (
+                        "prediction-pass"
+                        if converted_result == "Đạt"
+                        else "prediction-fail"
+                    )
+
+                    result_card_html = f"""
 <div class="prediction-result-card">
-    <div class="prediction-result-icon">🤖</div>
+    <div class="prediction-result-icon">🎯</div>
     <p class="prediction-result-label">Điểm G3 dự đoán</p>
-    <div class="prediction-result-score">--</div>
-    <span class="prediction-result-status">
-        Chờ kết nối model
+    <div class="prediction-result-score">{predicted_g3:.2f}</div>
+    <span class="prediction-result-status {status_class}">
+        Kết quả quy đổi: {converted_result}
     </span>
 </div>
 """
 
-            st.markdown(
-                waiting_card_html,
-                unsafe_allow_html=True
-            )
+                    st.success("Dự đoán thành công.")
+                    st.markdown(
+                        result_card_html,
+                        unsafe_allow_html=True
+                    )
 
-            st.write(
-                "**Học sinh:**",
-                cleaned_name
-            )
+                    st.write("**Học sinh:**", cleaned_name)
+                    st.write("**Chế độ:**", prediction_mode)
+                    st.write("**Model:**", model_name)
+                    st.caption(
+                        "Đạt/Trượt chỉ là kết quả quy đổi từ điểm G3. "
+                        "Mô hình chính vẫn là mô hình hồi quy."
+                    )
 
-            st.write(
-                "**Chế độ:**",
-                prediction_mode
-            )
+                    if "prediction_history" not in st.session_state:
+                        st.session_state.prediction_history = []
 
-            st.info(
-                "Model và API chưa được kết nối. "
-                "Khi endpoint POST /predict hoàn thành, "
-                "hệ thống sẽ hiển thị kết quả tại đây."
-            )
+                    st.session_state.prediction_history.append(
+                        {
+                            "Họ tên": cleaned_name,
+                            "Môn học": (
+                                "Toán"
+                                if subject == "math"
+                                else "Tiếng Bồ Đào Nha"
+                            ),
+                            "Chế độ dự đoán": prediction_mode,
+                            "Điểm G3 dự đoán": round(predicted_g3, 2),
+                            "Kết quả quy đổi": converted_result,
+                            "Model": model_name,
+                            "Scenario": scenario_name,
+                            "Thời gian": datetime.now().strftime(
+                                "%d/%m/%Y %H:%M:%S"
+                            )
+                        }
+                    )
+
+                elif response.status_code == 422:
+                    st.error(
+                        "API từ chối dữ liệu đầu vào. "
+                        "Hãy kiểm tra lại các trường đã nhập."
+                    )
+
+                    with st.expander(
+                        "Chi tiết lỗi xác thực từ API"
+                    ):
+                        st.json(response.json())
+
+                else:
+                    st.error(
+                        f"API trả về lỗi {response.status_code}."
+                    )
+
+                    with st.expander(
+                        "Chi tiết lỗi từ API"
+                    ):
+                        try:
+                            st.json(response.json())
+                        except ValueError:
+                            st.code(response.text)
+
+            except requests.exceptions.ConnectionError:
+                st.error(
+                    "Không kết nối được FastAPI. "
+                    "Hãy chạy API tại http://127.0.0.1:8000 trước."
+                )
+
+            except requests.exceptions.Timeout:
+                st.error(
+                    "API phản hồi quá lâu. Vui lòng thử lại."
+                )
+
+            except (KeyError, TypeError, ValueError) as error:
+                st.error(
+                    "Phản hồi từ API không đúng định dạng mong đợi."
+                )
+
+                with st.expander(
+                    "Chi tiết lỗi dành cho nhóm phát triển"
+                ):
+                    st.code(str(error))
 
         with st.expander(
             "🛠 Dữ liệu kỹ thuật dành cho nhóm phát triển"
