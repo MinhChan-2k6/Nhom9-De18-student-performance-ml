@@ -90,3 +90,65 @@ def test_with_previous_grades_mode_requires_g1_and_g2() -> None:
     response = client.post("/predict", json=payload)
 
     assert response.status_code == 422
+
+
+def test_batch_predict_endpoint_returns_csv(monkeypatch) -> None:
+    import pandas as pd
+
+    def fake_predict_batch(dataframe, prediction_mode, *, include_input=True):
+        assert prediction_mode == "with_g1_g2"
+        assert include_input is True
+
+        output = dataframe.copy() if include_input else pd.DataFrame(index=dataframe.index)
+        output["predicted_g3"] = [13.5] * len(dataframe)
+        output["model"] = "dummy_regressor"
+        output["scenario"] = "A_with_G1_G2"
+        return output
+
+    monkeypatch.setattr(
+        "api.routers.batch_predict.predict_batch_dataframe",
+        fake_predict_batch,
+    )
+
+    client = TestClient(app)
+    csv_dataframe = pd.DataFrame(
+        [{**BASE_FEATURES, "G1": 12, "G2": 14}]
+    )
+
+    response = client.post(
+        "/predict/batch",
+        files={
+            "file": (
+                "students.csv",
+                csv_dataframe.to_csv(index=False).encode("utf-8"),
+                "text/csv",
+            )
+        },
+        data={
+            "prediction_mode": "with_g1_g2",
+            "include_input": "true",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "students_predictions.csv" in response.headers["content-disposition"]
+
+    result = pd.read_csv(__import__("io").BytesIO(response.content))
+    assert len(result) == 1
+    assert result.loc[0, "predicted_g3"] == 13.5
+    assert result.loc[0, "model"] == "dummy_regressor"
+    assert result.loc[0, "scenario"] == "A_with_G1_G2"
+
+
+def test_batch_predict_endpoint_rejects_non_csv_file() -> None:
+    client = TestClient(app)
+
+    response = client.post(
+        "/predict/batch",
+        files={"file": ("students.txt", b"not a csv", "text/plain")},
+        data={"prediction_mode": "early_prediction"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Chỉ chấp nhận file có phần mở rộng .csv."

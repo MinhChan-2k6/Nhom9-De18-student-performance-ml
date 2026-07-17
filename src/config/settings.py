@@ -34,18 +34,14 @@ RANDOM_FOREST_BASE_PARAMS: Final[dict[str, object]] = {
 
 RANDOM_FOREST_TUNING_PARAMS: Final[dict[str, object]] = {
     "random_state": RANDOM_STATE,
-    # GridSearchCV chạy ở tầng ngoài; để 1 nhằm tránh nested parallelism.
     "n_jobs": 1,
 }
 
 RANDOM_FOREST_GRID: Final[dict[str, list[object]]] = {
-    # Grid vừa đủ để so sánh, tránh hàng trăm lượt fit gây treo máy.
     "model__n_estimators": [200, 300],
     "model__max_depth": [None, 10],
     "model__min_samples_split": [2, 5],
     "model__min_samples_leaf": [1],
-    # Bao gồm 1.0 (mặc định của RandomForestRegressor) để GridSearch không
-    # loại bỏ cấu hình baseline mạnh, đồng thời vẫn so sánh với "sqrt".
     "model__max_features": [1.0, "sqrt"],
 }
 

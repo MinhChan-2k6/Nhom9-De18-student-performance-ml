@@ -1,12 +1,7 @@
 """Đọc và gộp dữ liệu điểm học sinh từ hai file CSV gốc.
-
 Luồng xử lý:
-
     data/raw/student-mat.csv  \
         + data/raw/student-por.csv -> data/interim/merged.csv
-
-Hai file trong data/raw được giữ nguyên. File này chỉ đọc dữ liệu, thêm cột
-subject để phân biệt môn học rồi lưu dữ liệu đã gộp vào thư mục data/interim.
 """
 
 from __future__ import annotations
@@ -27,7 +22,6 @@ MERGED_FILE = INTERIM_DIR / "merged.csv"
 
 
 def load_subject_data(path: Path, subject: str) -> pd.DataFrame:
-    """Đọc dữ liệu của một môn và thêm cột subject."""
     if not path.exists():
         raise FileNotFoundError(f"Không tìm thấy file dữ liệu gốc: {path}")
 
@@ -37,14 +31,12 @@ def load_subject_data(path: Path, subject: str) -> pd.DataFrame:
 
 
 def load_raw_data() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Đọc hai bộ dữ liệu Toán và Tiếng Bồ Đào Nha."""
     math_df = load_subject_data(MATH_FILE, "math")
     portuguese_df = load_subject_data(PORTUGUESE_FILE, "portuguese")
     return math_df, portuguese_df
 
 
 def merge_raw_data() -> pd.DataFrame:
-    """Kiểm tra schema rồi gộp hai bộ dữ liệu thành một bảng."""
     math_df, portuguese_df = load_raw_data()
 
     if list(math_df.columns) != list(portuguese_df.columns):
@@ -60,7 +52,6 @@ def merge_raw_data() -> pd.DataFrame:
 
 
 def save_merged_data(output_path: Path = MERGED_FILE) -> pd.DataFrame:
-    """Gộp dữ liệu và lưu kết quả vào file merged.csv."""
     merged_df = merge_raw_data()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     merged_df.to_csv(output_path, index=False)
@@ -68,7 +59,6 @@ def save_merged_data(output_path: Path = MERGED_FILE) -> pd.DataFrame:
 
 
 def main() -> None:
-    # Để terminal Windows in được thông báo tiếng Việt có dấu.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 

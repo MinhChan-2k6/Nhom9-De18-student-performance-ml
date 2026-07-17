@@ -1,4 +1,6 @@
-"""Tạo bộ biểu đồ đánh giá mô hình và lưu dưới dạng PNG."""
+"""
+Tạo bộ biểu đồ đánh giá mô hình và lưu dưới dạng PNG.
+"""
 
 from __future__ import annotations
 
@@ -25,13 +27,11 @@ DEFAULT_FIGSIZE = (10, 6)
 
 
 def _prepare_output_directory(output_dir: Path) -> None:
-    """Tạo thư mục chứa biểu đồ nếu chưa tồn tại."""
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
 
 def _save_figure(fig: plt.Figure, output_path: Path) -> Path:
-    """Lưu figure với cấu hình đồng nhất và giải phóng bộ nhớ."""
 
     fig.tight_layout()
     fig.savefig(
@@ -47,7 +47,6 @@ def plot_model_comparison(
     results: list[EvaluationResult],
     output_dir: Path,
 ) -> list[Path]:
-    """Vẽ riêng MAE, RMSE và R² để tránh trộn các thang đo."""
 
     _prepare_output_directory(output_dir)
     dataframe = results_to_dataframe(results)
@@ -104,7 +103,6 @@ def plot_actual_vs_predicted(
     metrics: RegressionMetrics,
     output_path: Path,
 ) -> Path:
-    """Vẽ điểm dự đoán so với điểm thực tế cùng đường lý tưởng y=x."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -154,7 +152,6 @@ def plot_score_distribution(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """So sánh phân phối điểm thực tế và điểm dự đoán."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -188,7 +185,6 @@ def plot_residuals_vs_predicted(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """Kiểm tra residual có phân bố ngẫu nhiên quanh đường 0 hay không."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -216,7 +212,6 @@ def plot_residual_distribution(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """Vẽ phân phối residual và đánh dấu sai số trung bình."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -246,7 +241,6 @@ def plot_absolute_error_by_score(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """Cho biết model thường sai nhiều ở vùng điểm thực tế nào."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -295,7 +289,6 @@ def save_model_comparison(
     results: list[EvaluationResult],
     output_path: Path,
 ) -> Path:
-    """Lưu bảng so sánh model dưới dạng CSV để dùng trong báo cáo."""
 
     dataframe = results_to_dataframe(results)
     dataframe["display_name"] = [
@@ -314,7 +307,6 @@ def _extract_feature_importance(
     fitted_pipeline: Pipeline,
     feature_names: list[str],
 ) -> pd.DataFrame | None:
-    """Lấy feature importance từ model cây hoặc hệ số tuyệt đối từ model tuyến tính."""
 
     if "model" not in fitted_pipeline.named_steps:
         raise ValueError("Pipeline không có bước 'model'.")
@@ -358,7 +350,6 @@ def plot_feature_importance(
     output_path: Path,
     top_n: int = 20,
 ) -> Path | None:
-    """Vẽ top đặc trưng ảnh hưởng mạnh nhất đến dự đoán."""
 
     importance_df = _extract_feature_importance(
         fitted_pipeline=fitted_pipeline,
@@ -396,7 +387,6 @@ def save_test_predictions(
     y_pred: np.ndarray,
     output_path: Path,
 ) -> Path:
-    """Lưu dữ liệu dùng trong biểu đồ để dễ kiểm chứng và làm báo cáo."""
 
     true_values = np.asarray(y_true, dtype=float).reshape(-1)
     predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
@@ -423,7 +413,6 @@ def generate_evaluation_artifacts(
     output_dir: Path,
     predictions_path: Path,
 ) -> dict[str, Any]:
-    """Tạo toàn bộ biểu đồ và file dự đoán sau khi huấn luyện."""
 
     _prepare_output_directory(output_dir)
     generated_paths: list[Path] = []

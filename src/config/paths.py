@@ -33,7 +33,6 @@ MODEL_DONT_HAVE_A_B_DIR = ARTIFACT_DIR / "Model_Dont_Have_A_B"
 
 @dataclass(frozen=True)
 class ScenarioArtifactPaths:
-    """Tập hợp toàn bộ đường dẫn output của một scenario."""
 
     directory: Path
     model: Path
@@ -69,7 +68,6 @@ SCENARIO_ARTIFACT_PATHS: dict[str, ScenarioArtifactPaths] = {
 def get_scenario_artifact_paths(
     scenario_name: str,
 ) -> ScenarioArtifactPaths:
-    """Lấy bộ đường dẫn artifact tương ứng với scenario."""
 
     try:
         return SCENARIO_ARTIFACT_PATHS[scenario_name]
