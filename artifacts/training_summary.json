@@ -1,0 +1,109 @@
+{
+    "task": "regression",
+    "target": "G3",
+    "models_created": 2,
+    "scenarios": [
+        {
+            "scenario": "A_with_G1_G2",
+            "best_model": "random_forest",
+            "artifact_directory": "artifacts/Model_Have_A_B",
+            "model_path": "artifacts/Model_Have_A_B/best_regression_model.pkl",
+            "total_input_features": 33,
+            "input_features": [
+                "subject",
+                "school",
+                "sex",
+                "age",
+                "address",
+                "famsize",
+                "Pstatus",
+                "Medu",
+                "Fedu",
+                "Mjob",
+                "Fjob",
+                "reason",
+                "guardian",
+                "traveltime",
+                "studytime",
+                "failures",
+                "schoolsup",
+                "famsup",
+                "paid",
+                "activities",
+                "nursery",
+                "higher",
+                "internet",
+                "romantic",
+                "famrel",
+                "freetime",
+                "goout",
+                "Dalc",
+                "Walc",
+                "health",
+                "absences",
+                "G1",
+                "G2"
+            ],
+            "validation_metrics": {
+                "mae": 1.1425272331154686,
+                "rmse": 1.8994189380192112,
+                "r2": 0.8204869002223327
+            },
+            "test_metrics": {
+                "mae": 0.976983,
+                "rmse": 1.450978,
+                "r2": 0.854988
+            }
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "best_model": "random_forest",
+            "artifact_directory": "artifacts/Model_Dont_Have_A_B",
+            "model_path": "artifacts/Model_Dont_Have_A_B/best_regression_model.pkl",
+            "total_input_features": 31,
+            "input_features": [
+                "subject",
+                "school",
+                "sex",
+                "age",
+                "address",
+                "famsize",
+                "Pstatus",
+                "Medu",
+                "Fedu",
+                "Mjob",
+                "Fjob",
+                "reason",
+                "guardian",
+                "traveltime",
+                "studytime",
+                "failures",
+                "schoolsup",
+                "famsup",
+                "paid",
+                "activities",
+                "nursery",
+                "higher",
+                "internet",
+                "romantic",
+                "famrel",
+                "freetime",
+                "goout",
+                "Dalc",
+                "Walc",
+                "health",
+                "absences"
+            ],
+            "validation_metrics": {
+                "mae": 2.8770806100217863,
+                "rmse": 3.901954019547239,
+                "r2": 0.2424367240140628
+            },
+            "test_metrics": {
+                "mae": 2.112764,
+                "rmse": 2.77514,
+                "r2": 0.46954
+            }
+        }
+    ]
+}

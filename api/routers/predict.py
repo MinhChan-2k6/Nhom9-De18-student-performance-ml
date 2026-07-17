@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> origin/MinhChan
 from fastapi import APIRouter, HTTPException, status
 
 from api.schemas import PredictRequest, PredictResponse
@@ -22,11 +27,16 @@ def predict_student(payload: PredictRequest) -> PredictResponse:
             )
 
     try:
+<<<<<<< HEAD
         service = get_prediction_service()
         result = service.predict(
             features=features,
             prediction_mode=payload.prediction_mode,
         )
+=======
+        service = get_prediction_service(payload.prediction_mode)
+        result = service.predict(features=features)
+>>>>>>> origin/MinhChan
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -47,3 +57,7 @@ def predict_student(payload: PredictRequest) -> PredictResponse:
         full_name=payload.student.full_name,
         **result,
     )
+<<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
+>>>>>>> origin/MinhChan

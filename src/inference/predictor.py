@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import json
 from functools import lru_cache
+<<<<<<< HEAD
 from pathlib import Path
 from typing import Any
+=======
+from typing import Any, Literal
+>>>>>>> origin/MinhChan
 
 import joblib
 import numpy as np
 import pandas as pd
 
+<<<<<<< HEAD
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ARTIFACT_DIR = PROJECT_ROOT / "artifacts"
 MODEL_PATH = ARTIFACT_DIR / "best_regression_model.pkl"
@@ -50,6 +55,69 @@ class PredictionService:
                 "Cần huấn luyện và lưu riêng model Scenario B cho dự báo sớm."
             )
 
+=======
+from src.config.paths import get_scenario_artifact_paths
+from src.config.settings import (
+    SCENARIO_WITH_PREVIOUS_GRADES,
+    SCENARIO_WITHOUT_PREVIOUS_GRADES,
+)
+
+PredictionMode = Literal["with_g1_g2", "early_prediction"]
+
+MODE_TO_SCENARIO: dict[str, str] = {
+    "with_g1_g2": SCENARIO_WITH_PREVIOUS_GRADES,
+    "early_prediction": SCENARIO_WITHOUT_PREVIOUS_GRADES,
+}
+
+
+class PredictionService:
+    """Load đúng pipeline theo chế độ và dự đoán một học sinh."""
+
+    def __init__(self, prediction_mode: PredictionMode) -> None:
+        if prediction_mode not in MODE_TO_SCENARIO:
+            raise ValueError(f"Chế độ dự đoán không hợp lệ: {prediction_mode}")
+
+        self.prediction_mode = prediction_mode
+        self.scenario = MODE_TO_SCENARIO[prediction_mode]
+        self.paths = get_scenario_artifact_paths(self.scenario)
+
+        if not self.paths.model.exists() or self.paths.model.stat().st_size == 0:
+            raise FileNotFoundError(
+                f"Không tìm thấy model cho scenario {self.scenario} tại "
+                f"{self.paths.model}. Hãy chạy python -m src.training.train."
+            )
+
+        self.model = joblib.load(self.paths.model)
+        self.metrics = self._load_metrics()
+        self.best_scenario = self.metrics.get("best_scenario", self.scenario)
+        self.best_model = self.metrics.get("best_model", "unknown")
+        self.input_features = self.metrics.get("input_features", [])
+
+        if self.best_scenario != self.scenario:
+            raise ValueError(
+                "Scenario trong metrics.json không khớp với thư mục model."
+            )
+
+        if not self.input_features:
+            raise ValueError(
+                f"{self.paths.metrics} chưa có danh sách input_features."
+            )
+
+    def _load_metrics(self) -> dict[str, Any]:
+        if not self.paths.metrics.exists() or self.paths.metrics.stat().st_size == 0:
+            raise FileNotFoundError(
+                f"Không tìm thấy metrics tại {self.paths.metrics}."
+            )
+
+        try:
+            return json.loads(self.paths.metrics.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"File {self.paths.metrics} không đúng định dạng JSON."
+            ) from exc
+
+    def predict(self, features: dict[str, Any]) -> dict[str, Any]:
+>>>>>>> origin/MinhChan
         missing_features = [
             feature for feature in self.input_features if feature not in features
         ]
@@ -75,8 +143,18 @@ class PredictionService:
         }
 
 
+<<<<<<< HEAD
 @lru_cache(maxsize=1)
 def get_prediction_service() -> PredictionService:
     """Return one cached model service per API process."""
 
     return PredictionService()
+=======
+@lru_cache(maxsize=2)
+def get_prediction_service(
+    prediction_mode: PredictionMode,
+) -> PredictionService:
+    """Cache riêng một service cho mỗi chế độ dự đoán."""
+
+    return PredictionService(prediction_mode=prediction_mode)
+>>>>>>> origin/MinhChan
