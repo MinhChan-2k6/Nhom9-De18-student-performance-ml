@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.routers.batch_predict import router as batch_predict_router
 from api.routers.predict import router as predict_router
 
 app = FastAPI(
@@ -18,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(predict_router)
+app.include_router(batch_predict_router)
 
 
 @app.get("/health", tags=["System"])
