@@ -1,0 +1,4 @@
+﻿scenario,model,mae,rmse,r2,display_name
+A_with_G1_G2,random_forest,1.142527,1.899419,0.820487,"Có G1, G2 | Random Forest"
+A_with_G1_G2,gradient_boosting,1.132185,1.900339,0.820313,"Có G1, G2 | Gradient Boosting"
+A_with_G1_G2,linear_regression,1.203455,2.12839,0.774598,"Có G1, G2 | Linear Regression"

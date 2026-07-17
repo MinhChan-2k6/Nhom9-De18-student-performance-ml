@@ -1,0 +1,4 @@
+﻿scenario,model,mae,rmse,r2,display_name
+B_without_G1_G2,random_forest,2.877081,3.901954,0.242437,"Không G1, G2 | Random Forest"
+B_without_G1_G2,gradient_boosting,2.858986,3.99676,0.205176,"Không G1, G2 | Gradient Boosting"
+B_without_G1_G2,linear_regression,2.916233,4.098076,0.164369,"Không G1, G2 | Linear Regression"
