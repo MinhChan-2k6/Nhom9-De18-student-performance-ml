@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.routers.batch_predict import router as batch_predict_router
 from api.routers.predict import router as predict_router
-
+from api.routers.history import router as history_router
+from api.routers.model_info import router as model_info_router
 app = FastAPI(
     title="Student Performance Prediction API",
     version="1.0.0",
@@ -20,6 +21,9 @@ app.add_middleware(
 
 app.include_router(predict_router)
 app.include_router(batch_predict_router)
+app.include_router(predict_router)
+app.include_router(history_router)
+app.include_router(model_info_router)
 
 
 @app.get("/health", tags=["System"])

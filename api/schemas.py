@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Literal
+from datetime import datetime
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -10,53 +11,106 @@ class StudentInformation(BaseModel):
 
 
 class PredictionFeatures(BaseModel):
-    """Toàn bộ đặc trưng đầu vào của hai model hồi quy G3."""
+    """Đặc trưng đầu vào cho hai mô hình dự đoán điểm G3."""
 
     model_config = ConfigDict(extra="forbid")
 
+    # Thông tin cơ bản: bắt buộc
     subject: Literal["math", "portuguese"]
-    school: Literal["gp", "ms"]
     sex: Literal["f", "m"]
     age: int = Field(ge=15, le=22)
-    address: Literal["u", "r"]
-    famsize: Literal["le3", "gt3"]
-    Pstatus: Literal["t", "a"]
-    Medu: int = Field(ge=0, le=4)
-    Fedu: int = Field(ge=0, le=4)
-    Mjob: Literal["teacher", "health", "services", "at_home", "other"]
-    Fjob: Literal["teacher", "health", "services", "at_home", "other"]
-    reason: Literal["course", "home", "reputation", "other"]
-    guardian: Literal["mother", "father", "other"]
-    traveltime: int = Field(ge=1, le=4)
     studytime: int = Field(ge=1, le=4)
     failures: int = Field(ge=0, le=3)
-    schoolsup: Literal["yes", "no"]
-    famsup: Literal["yes", "no"]
-    paid: Literal["yes", "no"]
-    activities: Literal["yes", "no"]
-    nursery: Literal["yes", "no"]
-    higher: Literal["yes", "no"]
-    internet: Literal["yes", "no"]
-    romantic: Literal["yes", "no"]
-    famrel: int = Field(ge=1, le=5)
-    freetime: int = Field(ge=1, le=5)
-    goout: int = Field(ge=1, le=5)
-    Dalc: int = Field(ge=1, le=5)
-    Walc: int = Field(ge=1, le=5)
-    health: int = Field(ge=1, le=5)
     absences: int = Field(ge=0, le=75)
+
+    # Thông tin chi tiết: không bắt buộc
+    school: Literal["gp", "ms"] | None = None
+    address: Literal["u", "r"] | None = None
+    famsize: Literal["le3", "gt3"] | None = None
+    Pstatus: Literal["t", "a"] | None = None
+
+    Medu: int | None = Field(default=None, ge=0, le=4)
+    Fedu: int | None = Field(default=None, ge=0, le=4)
+
+    Mjob: Literal[
+        "teacher",
+        "health",
+        "services",
+        "at_home",
+        "other",
+    ] | None = None
+
+    Fjob: Literal[
+        "teacher",
+        "health",
+        "services",
+        "at_home",
+        "other",
+    ] | None = None
+
+    reason: Literal[
+        "course",
+        "home",
+        "reputation",
+        "other",
+    ] | None = None
+
+    guardian: Literal[
+        "mother",
+        "father",
+        "other",
+    ] | None = None
+
+    traveltime: int | None = Field(default=None, ge=1, le=4)
+
+    schoolsup: Literal["yes", "no"] | None = None
+    famsup: Literal["yes", "no"] | None = None
+    paid: Literal["yes", "no"] | None = None
+    activities: Literal["yes", "no"] | None = None
+    nursery: Literal["yes", "no"] | None = None
+    higher: Literal["yes", "no"] | None = None
+    internet: Literal["yes", "no"] | None = None
+    romantic: Literal["yes", "no"] | None = None
+
+    famrel: int | None = Field(default=None, ge=1, le=5)
+    freetime: int | None = Field(default=None, ge=1, le=5)
+    goout: int | None = Field(default=None, ge=1, le=5)
+    Dalc: int | None = Field(default=None, ge=1, le=5)
+    Walc: int | None = Field(default=None, ge=1, le=5)
+    health: int | None = Field(default=None, ge=1, le=5)
+
+    # Chỉ bắt buộc khi prediction_mode = with_g1_g2
     G1: int | None = Field(default=None, ge=0, le=20)
     G2: int | None = Field(default=None, ge=0, le=20)
 
 
 class PredictRequest(BaseModel):
     student: StudentInformation
-    prediction_mode: Literal["with_g1_g2", "early_prediction"]
+    prediction_mode: Literal[
+        "with_g1_g2",
+        "early_prediction",
+    ]
     features: PredictionFeatures
 
 
 class PredictResponse(BaseModel):
     full_name: str
     predicted_g3: float = Field(ge=0, le=20)
+    converted_result: str
     model: str
     scenario: str
+
+
+class PredictionHistoryResponse(BaseModel):
+    prediction_id: int
+    student_code: str | None = None
+    full_name: str | None = None
+    subject: str | None = None
+    prediction_mode: str
+    scenario: str | None = None
+    predicted_g3: float
+    predicted_result: str
+    model_name: str
+    model_version: str | None = None
+    input_features: dict[str, Any] | None = None
+    created_at: datetime
