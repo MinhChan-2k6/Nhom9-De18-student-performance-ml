@@ -1,0 +1,5 @@
+﻿scenario,model,mae,rmse,r2,tuning,display_name
+A_with_G1_G2,random_forest_grid_search,1.135425,1.886236,0.82297,"{'method': 'GridSearchCV', 'scoring': 'neg_root_mean_squared_error', 'cv_folds': 3, 'candidate_count': 16, 'total_fits': 48, 'best_cv_rmse': 1.594842, 'best_params': {'model__max_depth': None, 'model__max_features': 1.0, 'model__min_samples_leaf': 1, 'model__min_samples_split': 2, 'model__n_estimators': 200}}","Có G1, G2 | RF Grid Search"
+A_with_G1_G2,random_forest,1.142527,1.899419,0.820487,,"Có G1, G2 | Random Forest"
+A_with_G1_G2,gradient_boosting,1.132185,1.900339,0.820313,,"Có G1, G2 | Gradient Boosting"
+A_with_G1_G2,linear_regression,1.203455,2.12839,0.774598,,"Có G1, G2 | Linear Regression"

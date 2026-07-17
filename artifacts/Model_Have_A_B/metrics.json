@@ -1,0 +1,141 @@
+{
+    "task": "regression",
+    "target": "G3",
+    "best_model": "random_forest_grid_search",
+    "best_scenario": "A_with_G1_G2",
+    "selection_metric": "validation_rmse",
+    "validation_results": [
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "linear_regression",
+            "mae": 1.203455,
+            "rmse": 2.12839,
+            "r2": 0.774598
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "random_forest",
+            "mae": 1.142527,
+            "rmse": 1.899419,
+            "r2": 0.820487
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "gradient_boosting",
+            "mae": 1.132185,
+            "rmse": 1.900339,
+            "r2": 0.820313
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "random_forest_grid_search",
+            "mae": 1.135425,
+            "rmse": 1.886236,
+            "r2": 0.82297,
+            "tuning": {
+                "method": "GridSearchCV",
+                "scoring": "neg_root_mean_squared_error",
+                "cv_folds": 3,
+                "candidate_count": 16,
+                "total_fits": 48,
+                "best_cv_rmse": 1.594842,
+                "best_params": {
+                    "model__max_depth": null,
+                    "model__max_features": 1.0,
+                    "model__min_samples_leaf": 1,
+                    "model__min_samples_split": 2,
+                    "model__n_estimators": 200
+                }
+            }
+        }
+    ],
+    "hyperparameter_tuning": {
+        "method": "GridSearchCV",
+        "scoring": "neg_root_mean_squared_error",
+        "cv_folds": 3,
+        "candidate_count": 16,
+        "total_fits": 48,
+        "best_cv_rmse": 1.594842,
+        "best_params": {
+            "model__max_depth": null,
+            "model__max_features": 1.0,
+            "model__min_samples_leaf": 1,
+            "model__min_samples_split": 2,
+            "model__n_estimators": 200
+        }
+    },
+    "test_metrics": {
+        "mae": 0.966044,
+        "rmse": 1.425448,
+        "r2": 0.860046
+    },
+    "test_pass_fail_metrics": {
+        "threshold": 10.0,
+        "accuracy": 0.816456,
+        "f1": 0.872247,
+        "confusion_matrix": [
+            [
+                30,
+                3
+            ],
+            [
+                26,
+                99
+            ]
+        ]
+    },
+    "input_features": [
+        "subject",
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "G1",
+        "G2"
+    ],
+    "total_input_features": 33,
+    "total_features_after_preprocessing": 60,
+    "evaluation_artifacts": {
+        "plots_directory": "Model_Have_A_B/plots",
+        "test_predictions": "Model_Have_A_B/test_predictions.csv",
+        "model_comparison_table": "Model_Have_A_B/plots/model_comparison.csv",
+        "generated_plots": [
+            "Model_Have_A_B/plots/model_comparison_mae.png",
+            "Model_Have_A_B/plots/model_comparison_rmse.png",
+            "Model_Have_A_B/plots/model_comparison_r2.png",
+            "Model_Have_A_B/plots/actual_vs_predicted.png",
+            "Model_Have_A_B/plots/score_distribution.png",
+            "Model_Have_A_B/plots/residuals_vs_predicted.png",
+            "Model_Have_A_B/plots/residual_distribution.png",
+            "Model_Have_A_B/plots/absolute_error_by_score.png",
+            "Model_Have_A_B/plots/pass_fail_confusion_matrix.png",
+            "Model_Have_A_B/plots/feature_importance.png"
+        ]
+    }
+}

@@ -1,0 +1,139 @@
+{
+    "task": "regression",
+    "target": "G3",
+    "best_model": "random_forest",
+    "best_scenario": "B_without_G1_G2",
+    "selection_metric": "validation_rmse",
+    "validation_results": [
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "linear_regression",
+            "mae": 2.916233,
+            "rmse": 4.098076,
+            "r2": 0.164369
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "random_forest",
+            "mae": 2.877081,
+            "rmse": 3.901954,
+            "r2": 0.242437
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "gradient_boosting",
+            "mae": 2.858986,
+            "rmse": 3.99676,
+            "r2": 0.205176
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "random_forest_grid_search",
+            "mae": 2.830153,
+            "rmse": 3.941239,
+            "r2": 0.227105,
+            "tuning": {
+                "method": "GridSearchCV",
+                "scoring": "neg_root_mean_squared_error",
+                "cv_folds": 3,
+                "candidate_count": 16,
+                "total_fits": 48,
+                "best_cv_rmse": 3.115348,
+                "best_params": {
+                    "model__max_depth": null,
+                    "model__max_features": "sqrt",
+                    "model__min_samples_leaf": 1,
+                    "model__min_samples_split": 2,
+                    "model__n_estimators": 300
+                }
+            }
+        }
+    ],
+    "hyperparameter_tuning": {
+        "method": "GridSearchCV",
+        "scoring": "neg_root_mean_squared_error",
+        "cv_folds": 3,
+        "candidate_count": 16,
+        "total_fits": 48,
+        "best_cv_rmse": 3.115348,
+        "best_params": {
+            "model__max_depth": null,
+            "model__max_features": "sqrt",
+            "model__min_samples_leaf": 1,
+            "model__min_samples_split": 2,
+            "model__n_estimators": 300
+        }
+    },
+    "test_metrics": {
+        "mae": 2.112764,
+        "rmse": 2.77514,
+        "r2": 0.46954
+    },
+    "test_pass_fail_metrics": {
+        "threshold": 10.0,
+        "accuracy": 0.753165,
+        "f1": 0.844622,
+        "confusion_matrix": [
+            [
+                13,
+                20
+            ],
+            [
+                19,
+                106
+            ]
+        ]
+    },
+    "input_features": [
+        "subject",
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences"
+    ],
+    "total_input_features": 31,
+    "total_features_after_preprocessing": 58,
+    "evaluation_artifacts": {
+        "plots_directory": "Model_Dont_Have_A_B/plots",
+        "test_predictions": "Model_Dont_Have_A_B/test_predictions.csv",
+        "model_comparison_table": "Model_Dont_Have_A_B/plots/model_comparison.csv",
+        "generated_plots": [
+            "Model_Dont_Have_A_B/plots/model_comparison_mae.png",
+            "Model_Dont_Have_A_B/plots/model_comparison_rmse.png",
+            "Model_Dont_Have_A_B/plots/model_comparison_r2.png",
+            "Model_Dont_Have_A_B/plots/actual_vs_predicted.png",
+            "Model_Dont_Have_A_B/plots/score_distribution.png",
+            "Model_Dont_Have_A_B/plots/residuals_vs_predicted.png",
+            "Model_Dont_Have_A_B/plots/residual_distribution.png",
+            "Model_Dont_Have_A_B/plots/absolute_error_by_score.png",
+            "Model_Dont_Have_A_B/plots/pass_fail_confusion_matrix.png",
+            "Model_Dont_Have_A_B/plots/feature_importance.png"
+        ]
+    }
+}
