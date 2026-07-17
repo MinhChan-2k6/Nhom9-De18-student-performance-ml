@@ -1,4 +1,6 @@
-"""So sánh kết quả và lựa chọn mô hình tốt nhất."""
+"""
+So sánh kết quả và lựa chọn mô hình tốt nhất.
+"""
 
 from __future__ import annotations
 
@@ -18,8 +20,6 @@ def is_better_result(
     candidate: EvaluationResult,
     current_best: EvaluationResult | None,
 ) -> bool:
-    """So sánh theo RMSE, sau đó dùng MAE và R² để phá hòa."""
-
     if current_best is None:
         return True
 
@@ -39,8 +39,6 @@ def is_better_result(
 def select_best_result(
     results: Iterable[EvaluationResult],
 ) -> EvaluationResult:
-    """Chọn kết quả tốt nhất và báo lỗi nếu danh sách rỗng."""
-
     best_result: EvaluationResult | None = None
 
     for result in results:
@@ -56,8 +54,6 @@ def select_best_result(
 def results_to_dataframe(
     results: Iterable[EvaluationResult],
 ) -> pd.DataFrame:
-    """Chuyển danh sách kết quả thành bảng để vẽ và xuất báo cáo."""
-
     records = [result.to_dict() for result in results]
 
     if not records:
@@ -72,8 +68,6 @@ def results_to_dataframe(
 
 
 def build_result_label(scenario: str, model: str) -> str:
-    """Tạo nhãn ngắn, dễ đọc cho bảng và biểu đồ."""
-
     scenario_label = (
         "Có G1, G2"
         if scenario == SCENARIO_WITH_PREVIOUS_GRADES

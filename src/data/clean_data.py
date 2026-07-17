@@ -1,11 +1,6 @@
 """Làm sạch bộ dữ liệu điểm học sinh sau khi đã gộp hai môn.
-
 Luồng xử lý:
-
     data/interim/merged.csv -> data/interim/cleaned.csv
-
-File dữ liệu gốc trong data/raw sẽ không bị thay đổi. Có thể chạy lại file này
-mỗi khi chạy load_data.py để tạo lại dữ liệu đã làm sạch.
 """
 
 from __future__ import annotations
@@ -80,7 +75,6 @@ NUMERIC_COLUMNS = [
 
 STRING_COLUMNS = [column for column in EXPECTED_COLUMNS if column not in NUMERIC_COLUMNS]
 
-# Khoảng giá trị hợp lệ của các cột số trong bộ dữ liệu.
 VALID_RANGES = {
     "age": (15, 22),
     "Medu": (0, 4),
@@ -113,7 +107,6 @@ YES_NO_COLUMNS = [
 
 
 def load_merged_data(input_path: Path = MERGED_FILE) -> pd.DataFrame:
-    """Đọc file merged.csv và kiểm tra tên, thứ tự các cột."""
     if not input_path.exists():
         raise FileNotFoundError(
             f"Merged data file not found: {input_path}. "
@@ -136,21 +129,18 @@ def load_merged_data(input_path: Path = MERGED_FILE) -> pd.DataFrame:
 
 
 def _normalize_string_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Xóa khoảng trắng thừa và đưa dữ liệu dạng chữ về chữ thường."""
     for column in STRING_COLUMNS:
         df[column] = df[column].astype("string").str.strip().str.lower()
     return df
 
 
 def _convert_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Đổi các cột cần tính toán sang kiểu dữ liệu số."""
     for column in NUMERIC_COLUMNS:
         df[column] = pd.to_numeric(df[column], errors="coerce")
     return df
 
 
 def _validate_no_missing_values(df: pd.DataFrame) -> None:
-    """Kiểm tra dữ liệu thiếu hoặc giá trị không đổi được sang số."""
     missing_counts = df.isna().sum()
     missing_counts = missing_counts[missing_counts > 0]
     if not missing_counts.empty:
@@ -164,7 +154,6 @@ def _validate_no_missing_values(df: pd.DataFrame) -> None:
 
 
 def _validate_values(df: pd.DataFrame) -> None:
-    """Kiểm tra các nhóm giá trị và khoảng điểm trước khi lưu file."""
     valid_subjects = {"math", "portuguese"}
     subjects = set(df["subject"].dropna().unique())
     invalid_subjects = subjects - valid_subjects
@@ -193,7 +182,6 @@ def _validate_values(df: pd.DataFrame) -> None:
 
 
 def clean_dataframe(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
-    """Làm sạch dữ liệu và trả về dữ liệu mới cùng số dòng trùng đã xóa."""
     cleaned_df = df.copy()
     cleaned_df = _normalize_string_columns(cleaned_df)
     cleaned_df = _convert_numeric_columns(cleaned_df)
@@ -211,7 +199,6 @@ def save_cleaned_data(
     input_path: Path = MERGED_FILE,
     output_path: Path = CLEANED_FILE,
 ) -> tuple[pd.DataFrame, int]:
-    """Làm sạch merged.csv, lưu thành cleaned.csv và trả về kết quả."""
     merged_df = load_merged_data(input_path)
     cleaned_df, duplicate_count = clean_dataframe(merged_df)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -220,7 +207,6 @@ def save_cleaned_data(
 
 
 def main() -> None:
-    # Để terminal Windows in được thông báo tiếng Việt có dấu.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 

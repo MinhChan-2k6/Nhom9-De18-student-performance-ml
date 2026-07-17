@@ -1,12 +1,9 @@
 """
-Chia dữ liệu sạch thành các tập train, validation và test theo học sinh.
-
 Mục đích:
 - Các bản ghi thuộc cùng một học sinh phải nằm trong cùng một tập.
 - Tránh việc một học sinh xuất hiện đồng thời ở train, validation hoặc test.
 
 Luồng xử lý:
-
     data/interim/cleaned.csv -> data/processed/train.csv
                              -> data/processed/valid.csv
                              -> data/processed/test.csv
@@ -36,11 +33,6 @@ TRAIN_RATIO = 0.70
 VALID_RATIO = 0.15
 TEST_RATIO = 0.15
 
-
-# Các cột được dùng để nhận dạng cùng một học sinh.
-#
-# Không sử dụng cột "subject", vì cùng một học sinh có thể xuất hiện
-# ở nhiều môn học khác nhau.
 STUDENT_ID_COLUMNS = [
     "school",
     "sex",
@@ -59,7 +51,6 @@ STUDENT_ID_COLUMNS = [
 
 
 def load_cleaned_data(input_path: Path = CLEANED_FILE) -> pd.DataFrame:
-    """Đọc cleaned.csv và kiểm tra các cột cần thiết."""
     if not input_path.exists():
         raise FileNotFoundError(
             f"Không tìm thấy file dữ liệu sạch: {input_path}. "
@@ -103,12 +94,6 @@ def load_cleaned_data(input_path: Path = CLEANED_FILE) -> pd.DataFrame:
 
 
 def create_student_group_id(df: pd.DataFrame) -> pd.Series:
-    """
-    Tạo mã nhóm cho từng học sinh.
-
-    Những dòng có cùng giá trị ở các cột STUDENT_ID_COLUMNS
-    sẽ nhận cùng một student_group_id.
-    """
     missing_columns = sorted(
         set(STUDENT_ID_COLUMNS) - set(df.columns)
     )
@@ -141,9 +126,6 @@ def check_no_group_overlap(
     valid_groups: pd.Series,
     test_groups: pd.Series,
 ) -> None:
-    """
-    Kiểm tra không có học sinh xuất hiện trong nhiều tập dữ liệu.
-    """
     train_group_set = set(train_groups)
     valid_group_set = set(valid_groups)
     test_group_set = set(test_groups)
@@ -175,12 +157,6 @@ def split_dataframe(
     df: pd.DataFrame,
     random_state: int = RANDOM_STATE,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """
-    Chia DataFrame thành train, validation và test theo nhóm học sinh.
-
-    Việc sử dụng GroupShuffleSplit bảo đảm tất cả bản ghi của cùng
-    một học sinh chỉ xuất hiện trong một tập dữ liệu.
-    """
     total_ratio = TRAIN_RATIO + VALID_RATIO + TEST_RATIO
 
     if abs(total_ratio - 1.0) > 1e-9:
@@ -195,10 +171,6 @@ def split_dataframe(
         working_df
     )
 
-    # Bước 1: chia train và tập tạm thời.
-    #
-    # train: 70%
-    # temporary: 30%
     first_splitter = GroupShuffleSplit(
         n_splits=1,
         train_size=TRAIN_RATIO,
@@ -215,10 +187,7 @@ def split_dataframe(
     train_df = working_df.iloc[train_indices].copy()
     temporary_df = working_df.iloc[temporary_indices].copy()
 
-    # Bước 2: chia tập tạm thời thành validation và test.
-    #
-    # Vì validation và test đều chiếm 15% toàn bộ dữ liệu,
-    # nên mỗi tập chiếm 50% của tập temporary.
+    #chia tập tạm thời thành validation và test.
     temporary_test_ratio = TEST_RATIO / (
         VALID_RATIO + TEST_RATIO
     )
@@ -268,7 +237,6 @@ def save_splits(
     valid_path: Path = VALID_FILE,
     test_path: Path = TEST_FILE,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Chia dữ liệu sạch và lưu ba file vào data/processed."""
     df = load_cleaned_data(input_path)
 
     train_df, valid_df, test_df = split_dataframe(df)
@@ -297,7 +265,6 @@ def save_splits(
 
 
 def main() -> None:
-    """Chạy quá trình chia và lưu dữ liệu."""
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
