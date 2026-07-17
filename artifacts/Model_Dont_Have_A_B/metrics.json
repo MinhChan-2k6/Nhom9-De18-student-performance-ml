@@ -8,9 +8,9 @@
         {
             "scenario": "B_without_G1_G2",
             "model": "linear_regression",
-            "mae": 2.916233,
-            "rmse": 4.098076,
-            "r2": 0.164369
+            "mae": 2.917968,
+            "rmse": 4.099846,
+            "r2": 0.163647
         },
         {
             "scenario": "B_without_G1_G2",
@@ -69,21 +69,6 @@
         "rmse": 2.77514,
         "r2": 0.46954
     },
-    "test_pass_fail_metrics": {
-        "threshold": 10.0,
-        "accuracy": 0.753165,
-        "f1": 0.844622,
-        "confusion_matrix": [
-            [
-                13,
-                20
-            ],
-            [
-                19,
-                106
-            ]
-        ]
-    },
     "input_features": [
         "subject",
         "school",
@@ -132,7 +117,6 @@
             "Model_Dont_Have_A_B/plots/residuals_vs_predicted.png",
             "Model_Dont_Have_A_B/plots/residual_distribution.png",
             "Model_Dont_Have_A_B/plots/absolute_error_by_score.png",
-            "Model_Dont_Have_A_B/plots/pass_fail_confusion_matrix.png",
             "Model_Dont_Have_A_B/plots/feature_importance.png"
         ]
     }

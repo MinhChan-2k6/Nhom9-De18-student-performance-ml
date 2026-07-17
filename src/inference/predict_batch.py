@@ -23,10 +23,9 @@ def predict_batch(
 ) -> pd.DataFrame:
     """Dự đoán toàn bộ dòng trong một DataFrame.
 
-    Các cột đầu vào được giữ nguyên khi ``include_input=True``. Bốn cột kết
-    quả được thêm ở cuối: ``predicted_g3``, ``converted_result``, ``model`` và
-    ``scenario``. Cột ``G3`` nếu có chỉ được giữ để đối chiếu, không được đưa
-    vào model.
+    Các cột đầu vào được giữ nguyên khi ``include_input=True``. Ba cột kết
+    quả được thêm ở cuối: ``predicted_g3``, ``model`` và ``scenario``. Cột
+    ``G3`` nếu có chỉ được giữ để đối chiếu, không được đưa vào model.
     """
 
     if not isinstance(dataframe, pd.DataFrame):

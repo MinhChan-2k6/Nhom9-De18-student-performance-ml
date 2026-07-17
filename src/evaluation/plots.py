@@ -16,11 +16,7 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 
 from src.evaluation.compare import build_result_label, results_to_dataframe
-from src.evaluation.metrics import (
-    EvaluationResult,
-    RegressionMetrics,
-    calculate_pass_fail_metrics,
-)
+from src.evaluation.metrics import EvaluationResult, RegressionMetrics
 
 LOGGER = logging.getLogger(__name__)
 
@@ -295,60 +291,6 @@ def plot_absolute_error_by_score(
     return _save_figure(fig, output_path)
 
 
-def plot_pass_fail_confusion_matrix(
-    y_true: pd.Series | np.ndarray,
-    y_pred: np.ndarray,
-    output_path: Path,
-    pass_threshold: float = 10.0,
-) -> Path:
-    """Đánh giá quy đổi Đạt/Trượt từ điểm G3 dự đoán."""
-
-    true_values = np.asarray(y_true, dtype=float).reshape(-1)
-    predicted_values = np.asarray(y_pred, dtype=float).reshape(-1)
-    pass_fail_metrics = calculate_pass_fail_metrics(
-        y_true=true_values,
-        y_pred=predicted_values,
-        threshold=pass_threshold,
-    )
-    matrix = np.asarray(pass_fail_metrics.confusion_matrix, dtype=int)
-
-    fig, ax = plt.subplots(figsize=(7, 6))
-    image = ax.imshow(matrix, interpolation="nearest", cmap="Blues")
-    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
-    ax.set_title("Ma trận nhầm lẫn Đạt/Trượt", fontweight="bold")
-    ax.set_xlabel("Nhãn dự đoán")
-    ax.set_ylabel("Nhãn thực tế")
-    ax.set_xticks([0, 1], labels=["Trượt", "Đạt"])
-    ax.set_yticks([0, 1], labels=["Trượt", "Đạt"])
-
-    threshold = matrix.max() / 2 if matrix.size else 0
-    for row in range(matrix.shape[0]):
-        for column in range(matrix.shape[1]):
-            value = int(matrix[row, column])
-            ax.text(
-                column,
-                row,
-                str(value),
-                ha="center",
-                va="center",
-                color="white" if value > threshold else "black",
-                fontsize=13,
-                fontweight="bold",
-            )
-
-    ax.text(
-        0.5,
-        -0.16,
-        f"Ngưỡng đạt: G3 ≥ {pass_threshold:g} | "
-        f"Accuracy = {pass_fail_metrics.accuracy:.3f} | "
-        f"F1 = {pass_fail_metrics.f1:.3f}",
-        transform=ax.transAxes,
-        ha="center",
-    )
-
-    return _save_figure(fig, output_path)
-
-
 def save_model_comparison(
     results: list[EvaluationResult],
     output_path: Path,
@@ -526,13 +468,6 @@ def generate_evaluation_artifacts(
             y_true=y_test,
             y_pred=y_pred,
             output_path=output_dir / "absolute_error_by_score.png",
-        )
-    )
-    generated_paths.append(
-        plot_pass_fail_confusion_matrix(
-            y_true=y_test,
-            y_pred=y_pred,
-            output_path=output_dir / "pass_fail_confusion_matrix.png",
         )
     )
 

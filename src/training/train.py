@@ -23,7 +23,6 @@ from src.config.settings import LOG_FORMAT, LOG_LEVEL, SCENARIOS, TARGET_COLUMN
 from src.evaluation.compare import select_best_result
 from src.evaluation.metrics import (
     EvaluationResult,
-    calculate_pass_fail_metrics,
     evaluate_pipeline,
     predict_and_evaluate,
 )
@@ -226,10 +225,9 @@ def write_model_card(
     input_features: list[str],
     paths: ScenarioArtifactPaths,
 ) -> None:
-    """Tạo model card riêng cho từng scenario."""
+    """Tạo model card hồi quy riêng cho từng scenario."""
 
     test_metrics = metrics_payload["test_metrics"]
-    pass_fail_metrics = metrics_payload.get("test_pass_fail_metrics", {})
     plot_count = len(
         metrics_payload.get("evaluation_artifacts", {}).get(
             "generated_plots", []
@@ -276,9 +274,6 @@ def write_model_card(
 - MAE: `{test_metrics['mae']}`
 - RMSE: `{test_metrics['rmse']}`
 - R²: `{test_metrics['r2']}`
-- Accuracy Đạt/Trượt: `{pass_fail_metrics.get('accuracy', 'N/A')}`
-- F1 Đạt/Trượt: `{pass_fail_metrics.get('f1', 'N/A')}`
-- Ngưỡng Đạt: `G3 >= {pass_fail_metrics.get('threshold', 10)}`
 
 {tuning_section}
 
@@ -286,6 +281,7 @@ def write_model_card(
 
 - Số cột đầu vào trước tiền xử lý: `{len(input_features)}`
 - Danh sách đầu vào: `{', '.join(input_features)}`
+- Đầu ra của model: Điểm `G3` dạng số thực
 - Số biểu đồ đánh giá: `{plot_count}`
 - Model: `{paths.model.relative_to(ARTIFACT_DIR.parent).as_posix()}`
 - Metrics: `{paths.metrics.relative_to(ARTIFACT_DIR.parent).as_posix()}`
@@ -294,7 +290,7 @@ def write_model_card(
 ## 5. Lưu ý
 
 - MAE và RMSE càng thấp càng tốt; R² càng gần 1 càng tốt.
-- Đạt/Trượt chỉ là kết quả quy đổi từ điểm G3 dự đoán.
+- Đầu ra duy nhất của hệ thống là điểm G3 dự đoán trên thang 0–20.
 - Không nên dùng dự đoán như quyết định duy nhất về kết quả học tập.
 """
 
@@ -334,10 +330,6 @@ def train_and_save_scenario(
         X=X_test,
         y=y_test,
     )
-    pass_fail_metrics = calculate_pass_fail_metrics(
-        y_true=y_test,
-        y_pred=test_predictions,
-    )
     feature_names = get_feature_names(final_pipeline)
     paths = get_scenario_artifact_paths(scenario_name)
 
@@ -369,7 +361,6 @@ def train_and_save_scenario(
             None,
         ),
         "test_metrics": test_metrics.to_dict(),
-        "test_pass_fail_metrics": pass_fail_metrics.to_dict(),
         "input_features": input_features,
         "total_input_features": len(input_features),
         "total_features_after_preprocessing": len(feature_names),
