@@ -186,6 +186,13 @@ def mode_label(value: str | None) -> str:
 def convert_history(
     records: list[dict],
 ) -> pd.DataFrame:
+    """
+    Chuyển dữ liệu lịch sử từ API thành DataFrame.
+
+    Bài toán thuần hồi quy nên chỉ sử dụng điểm G3 dự đoán,
+    không có kết quả Đạt/Trượt.
+    """
+
     rows = []
 
     for record in records:
@@ -200,7 +207,6 @@ def convert_history(
                     record.get("prediction_mode")
                 ),
                 "Điểm G3": record.get("predicted_g3"),
-                "Kết quả": record.get("predicted_result"),
                 "Model": record.get("model_name"),
                 "Scenario": record.get("scenario"),
                 "Thời gian": record.get("created_at"),
@@ -218,7 +224,7 @@ st.markdown(
     <div class="dashboard-hero">
         <h1>📊 Dashboard</h1>
         <p>
-            Tổng quan hoạt động của hệ thống dự đoán điểm G3,
+            Tổng quan hoạt động của hệ thống hồi quy dự đoán điểm G3,
             dữ liệu lịch sử và trạng thái các thành phần.
         </p>
     </div>
@@ -260,16 +266,13 @@ history_df = convert_history(history_records)
 
 
 # ==================================================
-# TÍNH TOÁN THỐNG KÊ
+# TÍNH TOÁN THỐNG KÊ HỒI QUY
 # ==================================================
 total_predictions = len(history_df)
 
 average_score = None
 minimum_score = None
 maximum_score = None
-
-passed_count = 0
-failed_count = 0
 
 if not history_df.empty:
     scores = pd.to_numeric(
@@ -282,14 +285,6 @@ if not history_df.empty:
         minimum_score = float(scores.min())
         maximum_score = float(scores.max())
 
-    passed_count = int(
-        (history_df["Kết quả"] == "Đạt").sum()
-    )
-
-    failed_count = int(
-        (history_df["Kết quả"] == "Trượt").sum()
-    )
-
 
 # ==================================================
 # TỔNG QUAN
@@ -299,7 +294,7 @@ st.markdown(
     <div class="section-title">
         <h3>🎓 Tổng quan hệ thống</h3>
         <p>
-            Các thống kê được tính từ lịch sử dự đoán
+            Các thống kê hồi quy được tính từ lịch sử dự đoán
             đang lưu trong SQL Server.
         </p>
     </div>
@@ -342,22 +337,6 @@ metric_col4.metric(
 )
 
 
-# ==================================================
-# ĐẠT / TRƯỢT
-# ==================================================
-result_col1, result_col2 = st.columns(2)
-
-result_col1.metric(
-    "✅ Số lượt Đạt",
-    passed_count,
-)
-
-result_col2.metric(
-    "⚠️ Số lượt Trượt",
-    failed_count,
-)
-
-
 st.divider()
 
 
@@ -371,7 +350,7 @@ chart_col1, chart_col2 = st.columns(
 
 
 # --------------------------------------------------
-# PHÂN BỐ ĐIỂM
+# PHÂN BỐ ĐIỂM G3
 # --------------------------------------------------
 with chart_col1:
 
@@ -443,7 +422,7 @@ with chart_col1:
 
 
 # --------------------------------------------------
-# ĐIỂM GẦN ĐÂY
+# ĐIỂM DỰ ĐOÁN GẦN ĐÂY
 # --------------------------------------------------
 with chart_col2:
 
@@ -452,7 +431,7 @@ with chart_col2:
         <div class="section-title">
             <h3>📉 Điểm dự đoán gần đây</h3>
             <p>
-                Theo dõi 10 kết quả dự đoán mới nhất.
+                Theo dõi 10 giá trị G3 dự đoán mới nhất.
             </p>
         </div>
         """,
@@ -511,7 +490,7 @@ st.markdown(
     <div class="section-title">
         <h3>⚙️ Trạng thái hệ thống</h3>
         <p>
-            Kiểm tra trạng thái API, SQL Server và model.
+            Kiểm tra trạng thái API, SQL Server và model hồi quy.
         </p>
     </div>
     """,
@@ -522,7 +501,9 @@ st.markdown(
 status_col1, status_col2, status_col3 = st.columns(3)
 
 
-# API
+# --------------------------------------------------
+# FASTAPI
+# --------------------------------------------------
 with status_col1:
 
     api_class = (
@@ -555,7 +536,9 @@ with status_col1:
     )
 
 
-# DATABASE
+# --------------------------------------------------
+# SQL SERVER
+# --------------------------------------------------
 with status_col2:
 
     db_class = (
@@ -588,7 +571,9 @@ with status_col2:
     )
 
 
+# --------------------------------------------------
 # MODEL
+# --------------------------------------------------
 with status_col3:
 
     model_names = []
@@ -618,7 +603,7 @@ with status_col3:
         f"""
         <div class="status-card">
             <div class="status-title">
-                🤖 Model
+                🤖 Model hồi quy
             </div>
             <div class="status-value">
                 {model_text}
@@ -643,7 +628,7 @@ st.markdown(
     <div class="section-title">
         <h3>🕘 Dự đoán gần đây</h3>
         <p>
-            10 kết quả dự đoán mới nhất được lưu trong SQL Server.
+            10 giá trị G3 dự đoán mới nhất được lưu trong SQL Server.
         </p>
     </div>
     """,
@@ -671,5 +656,5 @@ else:
 
 st.caption(
     "Dashboard cập nhật dữ liệu thông qua FastAPI; "
-    "lịch sử được lưu lâu dài trong SQL Server."
+    "lịch sử dự đoán hồi quy được lưu lâu dài trong SQL Server."
 )

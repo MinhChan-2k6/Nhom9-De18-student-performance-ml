@@ -1,15 +1,15 @@
 /* =========================================================
-   DATABASE: StudentPerformanceDB
-   Mục đích:
-   - Tạo database nếu chưa tồn tại
-   - Tạo bảng PredictionHistory
-   - Tạo bảng ModelVersions
-   - Bổ sung cột còn thiếu nếu database đã tồn tại
-   - Tạo index phục vụ truy vấn
+   STUDENT PERFORMANCE PREDICTION
+   DATABASE INITIALIZATION - SQL SERVER
+
+   Bài toán: Hồi quy dự đoán điểm G3
+   Không phân loại Đạt / Trượt
    ========================================================= */
 
-USE master;
-GO
+
+/* =========================================================
+   1. CREATE DATABASE
+   ========================================================= */
 
 IF DB_ID(N'StudentPerformanceDB') IS NULL
 BEGIN
@@ -23,14 +23,20 @@ GO
 
 
 /* =========================================================
-   1. BẢNG LỊCH SỬ DỰ ĐOÁN
+   2. TABLE: PredictionHistory
+   Lưu lịch sử dự đoán điểm G3
    ========================================================= */
 
-IF OBJECT_ID(N'dbo.PredictionHistory', N'U') IS NULL
+IF OBJECT_ID(
+    N'dbo.PredictionHistory',
+    N'U'
+) IS NULL
 BEGIN
-    CREATE TABLE dbo.PredictionHistory (
+    CREATE TABLE dbo.PredictionHistory
+    (
         prediction_id INT IDENTITY(1,1) NOT NULL
-            CONSTRAINT PK_PredictionHistory PRIMARY KEY,
+            CONSTRAINT PK_PredictionHistory
+            PRIMARY KEY,
 
         student_code NVARCHAR(50) NULL,
 
@@ -42,9 +48,7 @@ BEGIN
 
         scenario NVARCHAR(50) NULL,
 
-        predicted_g3 DECIMAL(5,2) NOT NULL,
-
-        predicted_result NVARCHAR(20) NOT NULL,
+        predicted_g3 DECIMAL(6,2) NOT NULL,
 
         model_name NVARCHAR(100) NOT NULL,
 
@@ -52,75 +56,57 @@ BEGIN
 
         input_json NVARCHAR(MAX) NULL,
 
-        created_at DATETIME2(0) NOT NULL
+        created_at DATETIME2 NOT NULL
             CONSTRAINT DF_PredictionHistory_CreatedAt
-            DEFAULT SYSDATETIME(),
-
-        CONSTRAINT CK_PredictionHistory_G3
-            CHECK (
-                predicted_g3 >= 0
-                AND predicted_g3 <= 20
-            ),
-
-        CONSTRAINT CK_PredictionHistory_Mode
-            CHECK (
-                prediction_mode IN (
-                    N'with_g1_g2',
-                    N'early_prediction'
-                )
-            ),
-
-        CONSTRAINT CK_PredictionHistory_Result
-            CHECK (
-                predicted_result IN (
-                    N'Đạt',
-                    N'Trượt'
-                )
-            ),
-
-        CONSTRAINT CK_PredictionHistory_Subject
-            CHECK (
-                subject IS NULL
-                OR subject IN (
-                    N'math',
-                    N'portuguese'
-                )
-            ),
-
-        CONSTRAINT CK_PredictionHistory_InputJson
-            CHECK (
-                input_json IS NULL
-                OR ISJSON(input_json) = 1
-            )
+            DEFAULT SYSDATETIME()
     );
 END;
 GO
 
 
 /* =========================================================
-   2. BẢNG QUẢN LÝ PHIÊN BẢN MODEL
-
-   Cấu trúc này khớp với database hiện tại của nhóm:
-   - model_version_id
-   - model_name
-   - version
-   - algorithm
-   - scenario
-   - mae
-   - rmse
-   - r2_score
-   - artifact_path
-   - is_active
-   - created_at
-   - model_version
-   - metrics_json
+   3. REMOVE OLD CLASSIFICATION COLUMN
+   Hỗ trợ database cũ đã từng có Đạt / Trượt
    ========================================================= */
 
-IF OBJECT_ID(N'dbo.ModelVersions', N'U') IS NULL
+IF EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = N'CK_PredictionHistory_Result'
+)
 BEGIN
-    CREATE TABLE dbo.ModelVersions (
+    ALTER TABLE dbo.PredictionHistory
+    DROP CONSTRAINT CK_PredictionHistory_Result;
+END;
+GO
+
+
+IF COL_LENGTH(
+    'dbo.PredictionHistory',
+    'predicted_result'
+) IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.PredictionHistory
+    DROP COLUMN predicted_result;
+END;
+GO
+
+
+/* =========================================================
+   4. TABLE: ModelVersions
+   Lưu thông tin các phiên bản model hồi quy
+   ========================================================= */
+
+IF OBJECT_ID(
+    N'dbo.ModelVersions',
+    N'U'
+) IS NULL
+BEGIN
+    CREATE TABLE dbo.ModelVersions
+    (
         model_version_id INT IDENTITY(1,1) NOT NULL
-            CONSTRAINT PK_ModelVersions PRIMARY KEY,
+            CONSTRAINT PK_ModelVersions
+            PRIMARY KEY,
 
         model_name NVARCHAR(100) NOT NULL,
 
@@ -128,21 +114,21 @@ BEGIN
 
         algorithm NVARCHAR(100) NULL,
 
-        scenario NVARCHAR(50) NOT NULL,
+        scenario NVARCHAR(50) NULL,
 
-        mae DECIMAL(10,6) NULL,
+        mae FLOAT NULL,
 
-        rmse DECIMAL(10,6) NULL,
+        rmse FLOAT NULL,
 
-        r2_score DECIMAL(10,6) NULL,
+        r2_score FLOAT NULL,
 
-        artifact_path NVARCHAR(260) NULL,
+        artifact_path NVARCHAR(500) NULL,
 
         is_active BIT NOT NULL
             CONSTRAINT DF_ModelVersions_IsActive
             DEFAULT 1,
 
-        created_at DATETIME2(0) NOT NULL
+        created_at DATETIME2 NOT NULL
             CONSTRAINT DF_ModelVersions_CreatedAt
             DEFAULT SYSDATETIME(),
 
@@ -155,20 +141,8 @@ GO
 
 
 /* =========================================================
-   3. BỔ SUNG CỘT NẾU BẢNG MODELVERSIONS ĐÃ TỒN TẠI
-   Giúp script chạy được với database cũ của nhóm
+   5. ADD MISSING COLUMNS FOR OLD DATABASES
    ========================================================= */
-
-IF COL_LENGTH(
-    'dbo.ModelVersions',
-    'model_name'
-) IS NULL
-BEGIN
-    ALTER TABLE dbo.ModelVersions
-    ADD model_name NVARCHAR(100) NULL;
-END;
-GO
-
 
 IF COL_LENGTH(
     'dbo.ModelVersions',
@@ -209,7 +183,7 @@ IF COL_LENGTH(
 ) IS NULL
 BEGIN
     ALTER TABLE dbo.ModelVersions
-    ADD mae DECIMAL(10,6) NULL;
+    ADD mae FLOAT NULL;
 END;
 GO
 
@@ -220,7 +194,7 @@ IF COL_LENGTH(
 ) IS NULL
 BEGIN
     ALTER TABLE dbo.ModelVersions
-    ADD rmse DECIMAL(10,6) NULL;
+    ADD rmse FLOAT NULL;
 END;
 GO
 
@@ -231,7 +205,7 @@ IF COL_LENGTH(
 ) IS NULL
 BEGIN
     ALTER TABLE dbo.ModelVersions
-    ADD r2_score DECIMAL(10,6) NULL;
+    ADD r2_score FLOAT NULL;
 END;
 GO
 
@@ -242,7 +216,7 @@ IF COL_LENGTH(
 ) IS NULL
 BEGIN
     ALTER TABLE dbo.ModelVersions
-    ADD artifact_path NVARCHAR(260) NULL;
+    ADD artifact_path NVARCHAR(500) NULL;
 END;
 GO
 
@@ -266,7 +240,7 @@ IF COL_LENGTH(
 ) IS NULL
 BEGIN
     ALTER TABLE dbo.ModelVersions
-    ADD created_at DATETIME2(0) NOT NULL
+    ADD created_at DATETIME2 NOT NULL
         CONSTRAINT DF_ModelVersions_CreatedAt_Migration
         DEFAULT SYSDATETIME();
 END;
@@ -296,7 +270,7 @@ GO
 
 
 /* =========================================================
-   4. INDEX CHO PREDICTION HISTORY
+   6. INDEXES
    ========================================================= */
 
 IF NOT EXISTS (
@@ -309,9 +283,7 @@ IF NOT EXISTS (
 )
 BEGIN
     CREATE INDEX IX_PredictionHistory_CreatedAt
-        ON dbo.PredictionHistory(
-            created_at DESC
-        );
+    ON dbo.PredictionHistory(created_at DESC);
 END;
 GO
 
@@ -326,22 +298,13 @@ IF NOT EXISTS (
 )
 BEGIN
     CREATE INDEX IX_PredictionHistory_ModeSubject
-        ON dbo.PredictionHistory(
-            prediction_mode,
-            subject
-        )
-        INCLUDE (
-            predicted_g3,
-            predicted_result,
-            created_at
-        );
+    ON dbo.PredictionHistory(
+        prediction_mode,
+        subject
+    );
 END;
 GO
 
-
-/* =========================================================
-   5. INDEX CHO MODEL VERSIONS
-   ========================================================= */
 
 IF NOT EXISTS (
     SELECT 1
@@ -353,17 +316,10 @@ IF NOT EXISTS (
 )
 BEGIN
     CREATE INDEX IX_ModelVersions_Scenario
-        ON dbo.ModelVersions(
-            scenario,
-            is_active
-        );
+    ON dbo.ModelVersions(scenario);
 END;
 GO
 
 
-/* =========================================================
-   HOÀN TẤT
-   ========================================================= */
-
-PRINT N'Khởi tạo cấu trúc StudentPerformanceDB thành công.';
+PRINT N'Khởi tạo database cho bài toán hồi quy thành công.';
 GO

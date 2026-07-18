@@ -6,6 +6,7 @@ from api.database import get_db
 from api.schemas import PredictRequest, PredictResponse
 from src.inference.predictor import get_prediction_service
 
+
 DEFAULT_FEATURES = {
     "school": "gp",
     "address": "u",
@@ -33,6 +34,8 @@ DEFAULT_FEATURES = {
     "Walc": 2,
     "health": 4,
 }
+
+
 router = APIRouter(tags=["Prediction"])
 
 
@@ -45,28 +48,51 @@ def predict_student(
     payload: PredictRequest,
     db: Session = Depends(get_db),
 ) -> PredictResponse:
-    features = payload.features.model_dump(exclude_none=True)
-    features = {
-    **DEFAULT_FEATURES,
-    **features,
-}
+    """
+    Dự đoán điểm G3 của học sinh bằng mô hình hồi quy.
 
+    Hệ thống chỉ trả về điểm G3 dự đoán,
+    không phân loại Đạt hoặc Trượt.
+    """
+
+    # Chỉ lấy những trường người dùng thực sự nhập.
+    features = payload.features.model_dump(
+        exclude_none=True,
+    )
+
+    # Bổ sung giá trị mặc định cho các trường tùy chọn
+    # mà người dùng không cung cấp.
+    features = {
+        **DEFAULT_FEATURES,
+        **features,
+    }
+
+    # Chế độ sử dụng G1 và G2 bắt buộc phải có đủ hai điểm.
     if payload.prediction_mode == "with_g1_g2":
-     if features.get("G1") is None or features.get("G2") is None:
-        raise HTTPException(
-            status_code=422,
-            detail="Chế độ có G1 và G2 yêu cầu nhập đủ hai điểm.",
-        )
+        if (
+            features.get("G1") is None
+            or features.get("G2") is None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Chế độ có G1 và G2 yêu cầu "
+                    "nhập đủ hai điểm."
+                ),
+            )
 
     try:
-        service = get_prediction_service(payload.prediction_mode)
-        result = service.predict(features=features)
-        predicted_result = (
-    "Đạt"
-    if float(result["predicted_g3"]) >= 10
-    else "Trượt"
-)
+        # Lấy prediction service tương ứng với chế độ dự đoán.
+        service = get_prediction_service(
+            payload.prediction_mode
+        )
 
+        # Thực hiện dự đoán hồi quy.
+        result = service.predict(
+            features=features
+        )
+
+        # Lưu kết quả dự đoán vào SQL Server.
         create_prediction_history(
             db,
             full_name=payload.student.full_name,
@@ -74,7 +100,6 @@ def predict_student(
             prediction_mode=payload.prediction_mode,
             scenario=result["scenario"],
             predicted_g3=result["predicted_g3"],
-            predicted_result=predicted_result,
             model_name=result["model"],
             model_version=None,
             input_features=features,
@@ -95,15 +120,16 @@ def predict_student(
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Không thể dự đoán hoặc lưu lịch sử: {exc}",
+            detail=(
+                "Không thể dự đoán hoặc lưu lịch sử: "
+                f"{exc}"
+            ),
         ) from exc
-        
-    return PredictResponse(
-    full_name=payload.student.full_name,
-    predicted_g3=result["predicted_g3"],
-    converted_result=predicted_result,
-    model=result["model"],
-    scenario=result["scenario"],
-)
 
-   
+    # Chỉ trả kết quả hồi quy.
+    return PredictResponse(
+        full_name=payload.student.full_name,
+        predicted_g3=float(result["predicted_g3"]),
+        model=result["model"],
+        scenario=result["scenario"],
+    )

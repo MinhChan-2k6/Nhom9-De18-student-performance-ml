@@ -327,7 +327,7 @@ st.markdown(
         <h1>🧠 Trung tâm mô hình</h1>
         <p>
             Theo dõi hai kịch bản dự đoán G3, mô hình được chọn,
-            độ chính xác và toàn bộ đặc trưng đầu vào.
+            hiệu năng đánh giá và toàn bộ đặc trưng đầu vào.
         </p>
     </div>
     """,

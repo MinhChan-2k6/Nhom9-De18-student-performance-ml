@@ -10,7 +10,7 @@ from streamlit_app.components.styles import load_css
 # Cấu hình trang
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Dự đoán kết quả",
+    page_title="Dự đoán điểm G3",
     page_icon="🤖",
     layout="wide",
 )
@@ -82,10 +82,10 @@ def display_api_error(response: requests.Response) -> None:
 # --------------------------------------------------
 # Tiêu đề trang
 # --------------------------------------------------
-st.title("🤖 Dự đoán kết quả học tập")
+st.title("🤖 Dự đoán điểm G3")
 st.caption(
-    "Chỉ cần nhập thông tin cơ bản để dự đoán. "
-    "Thông tin chi tiết là tùy chọn và giúp kết quả phù hợp hơn với từng học sinh."
+    "Hệ thống sử dụng mô hình hồi quy để dự đoán điểm G3. "
+    "Chỉ cần nhập thông tin cơ bản; thông tin chi tiết là tùy chọn."
 )
 
 
@@ -100,7 +100,7 @@ prediction_mode = st.radio(
     ],
     horizontal=True,
     help=(
-        "Chế độ có G1 và G2 thường cho kết quả chính xác hơn. "
+        "Chế độ có G1 và G2 sử dụng thêm điểm học kỳ trước. "
         "Chế độ dự báo sớm không sử dụng hai điểm này."
     ),
 )
@@ -111,7 +111,7 @@ if prediction_mode == "Có điểm G1 và G2":
     st.markdown(
         """
         <div class="recommend-note">
-            <strong>✅ Chế độ khuyến nghị</strong><br>
+            <strong>✅ Chế độ có G1 và G2</strong><br>
             G1 và G2 là hai thông tin bắt buộc trong chế độ này.
         </div>
         """,
@@ -124,7 +124,8 @@ else:
         """
         <div class="advanced-note">
             <strong>🔎 Chế độ dự báo sớm</strong><br>
-            Hệ thống không sử dụng G1 và G2, phù hợp để phát hiện sớm nguy cơ học tập.
+            Hệ thống không sử dụng G1 và G2,
+            cho phép ước lượng sớm điểm G3.
         </div>
         """,
         unsafe_allow_html=True,
@@ -167,7 +168,9 @@ with input_column:
         # ==========================================
         with basic_column:
             st.markdown(
-                '<div class="form-group-heading">👤 Thông tin cơ bản</div>',
+                '<div class="form-group-heading">'
+                '👤 Thông tin cơ bản'
+                '</div>',
                 unsafe_allow_html=True,
             )
 
@@ -212,7 +215,9 @@ with input_column:
         # ==========================================
         with study_column:
             st.markdown(
-                '<div class="form-group-heading">📚 Thông tin học tập</div>',
+                '<div class="form-group-heading">'
+                '📚 Thông tin học tập'
+                '</div>',
                 unsafe_allow_html=True,
             )
 
@@ -285,7 +290,9 @@ with input_column:
 
             with advanced_col1:
                 st.markdown(
-                    '<div class="form-group-heading">🏠 Trường học và gia đình</div>',
+                    '<div class="form-group-heading">'
+                    '🏠 Trường học và gia đình'
+                    '</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -407,13 +414,20 @@ with input_column:
 
             with advanced_col2:
                 st.markdown(
-                    '<div class="form-group-heading">🌱 Học tập và sinh hoạt</div>',
+                    '<div class="form-group-heading">'
+                    '🌱 Học tập và sinh hoạt'
+                    '</div>',
                     unsafe_allow_html=True,
                 )
 
                 school_reason = st.selectbox(
                     "Lý do chọn trường",
-                    options=["course", "home", "reputation", "other"],
+                    options=[
+                        "course",
+                        "home",
+                        "reputation",
+                        "other",
+                    ],
                     index=None,
                     placeholder="Không bắt buộc",
                     format_func=lambda value: {
@@ -547,7 +561,10 @@ with result_column:
         """
         <div class="section-title">
             <h3>🎯 Kết quả dự đoán</h3>
-            <p>Kết quả được trả về từ FastAPI và lưu vào SQL Server.</p>
+            <p>
+                Điểm G3 được dự đoán bởi mô hình hồi quy
+                và lưu vào SQL Server.
+            </p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -562,15 +579,22 @@ with result_column:
             """
             <div class="prediction-result-card">
                 <div class="prediction-result-icon">🎯</div>
-                <p class="prediction-result-label">Điểm G3 dự đoán</p>
+                <p class="prediction-result-label">
+                    Điểm G3 dự đoán
+                </p>
                 <div class="prediction-result-score">--</div>
-                <span class="prediction-result-status">Chưa dự đoán</span>
+                <span class="prediction-result-status">
+                    Chưa dự đoán
+                </span>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.write("**Chế độ:**", prediction_mode)
+        st.write(
+            "**Chế độ:**",
+            prediction_mode,
+        )
 
 
 # --------------------------------------------------
@@ -578,13 +602,20 @@ with result_column:
 # --------------------------------------------------
 if submitted:
     validation_errors: list[str] = []
+
     cleaned_name = full_name.strip()
+
     absences: int | None = None
 
     if not cleaned_name:
-        validation_errors.append("Vui lòng nhập họ và tên học sinh.")
+        validation_errors.append(
+            "Vui lòng nhập họ và tên học sinh."
+        )
+
     elif len(cleaned_name) < 2:
-        validation_errors.append("Họ và tên phải có ít nhất 2 ký tự.")
+        validation_errors.append(
+            "Họ và tên phải có ít nhất 2 ký tự."
+        )
 
     required_fields = {
         "môn học": subject,
@@ -601,15 +632,22 @@ if submitted:
             )
 
     if not absences_text.strip():
-        validation_errors.append("Vui lòng nhập số buổi vắng.")
+        validation_errors.append(
+            "Vui lòng nhập số buổi vắng."
+        )
+
     else:
         try:
-            absences = int(absences_text)
+            absences = int(
+                absences_text
+            )
 
             if absences < 0 or absences > 75:
                 validation_errors.append(
-                    "Số buổi vắng phải nằm trong khoảng từ 0 đến 75."
+                    "Số buổi vắng phải nằm trong "
+                    "khoảng từ 0 đến 75."
                 )
+
         except ValueError:
             validation_errors.append(
                 "Số buổi vắng phải là số nguyên."
@@ -617,20 +655,27 @@ if submitted:
 
     if prediction_mode_value == "with_g1_g2":
         if g1 is None:
-            validation_errors.append("Vui lòng chọn điểm G1.")
+            validation_errors.append(
+                "Vui lòng chọn điểm G1."
+            )
 
         if g2 is None:
-            validation_errors.append("Vui lòng chọn điểm G2.")
+            validation_errors.append(
+                "Vui lòng chọn điểm G2."
+            )
 
     with result_column:
         if validation_errors:
             st.error(
                 f"Dữ liệu chưa hợp lệ. "
-                f"Còn {len(validation_errors)} mục cần kiểm tra."
+                f"Còn {len(validation_errors)} "
+                "mục cần kiểm tra."
             )
 
             for error in validation_errors:
-                st.write(f"- {error}")
+                st.write(
+                    f"- {error}"
+                )
 
         else:
             model_input = {
@@ -673,7 +718,8 @@ if submitted:
             model_input.update(
                 {
                     key: value
-                    for key, value in optional_features.items()
+                    for key, value
+                    in optional_features.items()
                     if value is not None
                 }
             )
@@ -691,7 +737,9 @@ if submitted:
             }
 
             try:
-                with st.spinner("Đang gửi dữ liệu đến mô hình..."):
+                with st.spinner(
+                    "Đang gửi dữ liệu đến mô hình hồi quy..."
+                ):
                     response = requests.post(
                         API_URL,
                         json=request_payload,
@@ -702,82 +750,108 @@ if submitted:
                     prediction_data = response.json()
 
                     predicted_g3 = float(
-                        prediction_data["predicted_g3"]
+                        prediction_data[
+                            "predicted_g3"
+                        ]
                     )
+
                     model_name = prediction_data.get(
                         "model",
                         "Không xác định",
                     )
+
                     scenario_name = prediction_data.get(
                         "scenario",
                         prediction_mode_value,
                     )
-                    converted_result = prediction_data.get(
-                        "converted_result",
-                        "Đạt" if predicted_g3 >= 10 else "Trượt",
-                    )
 
-                    result_icon = (
-                        "✅"
-                        if converted_result == "Đạt"
-                        else "⚠️"
+                    st.success(
+                        "Dự đoán điểm G3 thành công."
                     )
-
-                    st.success("Dự đoán thành công.")
 
                     st.markdown(
                         f"""
                         <div class="prediction-result-card">
-                            <div class="prediction-result-icon">{result_icon}</div>
-                            <p class="prediction-result-label">Điểm G3 dự đoán</p>
+                            <div class="prediction-result-icon">
+                                🎯
+                            </div>
+                            <p class="prediction-result-label">
+                                Điểm G3 dự đoán
+                            </p>
                             <div class="prediction-result-score">
                                 {predicted_g3:.2f} / 20
                             </div>
                             <span class="prediction-result-status">
-                                {converted_result}
+                                Kết quả hồi quy
                             </span>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
 
-                    info_col1, info_col2 = st.columns(2)
+                    st.write(
+                        "**Học sinh:**",
+                        cleaned_name,
+                    )
 
-                    with info_col1:
-                        st.write("**Học sinh:**", cleaned_name)
-                        st.write("**Kết quả:**", converted_result)
+                    st.write(
+                        "**Điểm G3 dự đoán:**",
+                        f"{predicted_g3:.2f} / 20",
+                    )
 
-                    with info_col2:
-                        st.write("**Model:**", model_name)
-                        st.write("**Scenario:**", scenario_name)
+                    st.write(
+                        "**Model:**",
+                        model_name,
+                    )
+
+                    st.write(
+                        "**Scenario:**",
+                        scenario_name,
+                    )
 
                     st.caption(
-                        "Kết quả đã được FastAPI tự động lưu vào SQL Server."
+                        "Giá trị dự đoán đã được FastAPI "
+                        "tự động lưu vào SQL Server."
                     )
 
                 else:
-                    display_api_error(response)
+                    display_api_error(
+                        response
+                    )
 
             except requests.exceptions.ConnectionError:
                 st.error(
                     "Không kết nối được FastAPI. "
-                    "Hãy chạy API tại http://127.0.0.1:8000 trước."
+                    "Hãy chạy API tại "
+                    "http://127.0.0.1:8000 trước."
                 )
 
             except requests.exceptions.Timeout:
-                st.error("API phản hồi quá lâu. Vui lòng thử lại.")
-
-            except (KeyError, TypeError, ValueError) as error:
                 st.error(
-                    "Phản hồi từ API không đúng định dạng mong đợi."
+                    "API phản hồi quá lâu. "
+                    "Vui lòng thử lại."
+                )
+
+            except (
+                KeyError,
+                TypeError,
+                ValueError,
+            ) as error:
+                st.error(
+                    "Phản hồi từ API không đúng "
+                    "định dạng mong đợi."
                 )
 
                 with st.expander(
                     "Chi tiết lỗi dành cho nhóm phát triển"
                 ):
-                    st.code(str(error))
+                    st.code(
+                        str(error)
+                    )
 
             with st.expander(
                 "🛠 Dữ liệu kỹ thuật dành cho nhóm phát triển"
             ):
-                st.json(request_payload)
+                st.json(
+                    request_payload
+                )
