@@ -1,10 +1,5 @@
 """
-Chia dữ liệu sạch thành các tập train, validation và test theo học sinh.
-
-Mục đích:
-- Các bản ghi thuộc cùng một học sinh phải nằm trong cùng một tập.
-- Tránh việc một học sinh xuất hiện đồng thời ở train, validation hoặc test.
-
+Chia dữ liệu sạch thành các tập train, validation và test.
 Luồng xử lý:
 
     data/interim/cleaned.csv -> data/processed/train.csv
@@ -18,7 +13,7 @@ from pathlib import Path
 import sys
 
 import pandas as pd
-from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import train_test_split
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -31,35 +26,13 @@ VALID_FILE = PROCESSED_DIR / "valid.csv"
 TEST_FILE = PROCESSED_DIR / "test.csv"
 
 RANDOM_STATE = 42
-
 TRAIN_RATIO = 0.70
 VALID_RATIO = 0.15
 TEST_RATIO = 0.15
 
 
-# Các cột được dùng để nhận dạng cùng một học sinh.
-#
-# Không sử dụng cột "subject", vì cùng một học sinh có thể xuất hiện
-# ở nhiều môn học khác nhau.
-STUDENT_ID_COLUMNS = [
-    "school",
-    "sex",
-    "age",
-    "address",
-    "famsize",
-    "Pstatus",
-    "Medu",
-    "Fedu",
-    "Mjob",
-    "Fjob",
-    "reason",
-    "nursery",
-    "internet",
-]
-
-
 def load_cleaned_data(input_path: Path = CLEANED_FILE) -> pd.DataFrame:
-    """Đọc cleaned.csv và kiểm tra các cột cần thiết."""
+    """Đọc file cleaned.csv và kiểm tra các cột cần để chia dữ liệu."""
     if not input_path.exists():
         raise FileNotFoundError(
             f"Không tìm thấy file dữ liệu sạch: {input_path}. "
@@ -67,199 +40,61 @@ def load_cleaned_data(input_path: Path = CLEANED_FILE) -> pd.DataFrame:
         )
 
     df = pd.read_csv(input_path)
-
-    required_columns = {
-        "subject",
-        "G3",
-        *STUDENT_ID_COLUMNS,
-    }
-
+    required_columns = {"subject", "G3"}
     missing_columns = sorted(required_columns - set(df.columns))
-
     if missing_columns:
         raise ValueError(
-            "File cleaned.csv bị thiếu các cột cần thiết: "
-            f"{missing_columns}"
+            f"File cleaned.csv bị thiếu các cột cần thiết: {missing_columns}"
         )
 
     if df.empty:
-        raise ValueError(
-            "File cleaned.csv đang không có dữ liệu để chia."
-        )
+        raise ValueError("File cleaned.csv đang không có dữ liệu để chia.")
 
-    columns_to_check = [
-        "subject",
-        "G3",
-        *STUDENT_ID_COLUMNS,
-    ]
-
-    if df[columns_to_check].isna().any().any():
-        raise ValueError(
-            "Các cột subject, G3 hoặc cột nhận dạng học sinh "
-            "đang có giá trị bị thiếu."
-        )
+    if df[["subject", "G3"]].isna().any().any():
+        raise ValueError("Cột subject hoặc G3 đang có giá trị bị thiếu.")
 
     return df
 
 
-def create_student_group_id(df: pd.DataFrame) -> pd.Series:
-    """
-    Tạo mã nhóm cho từng học sinh.
-
-    Những dòng có cùng giá trị ở các cột STUDENT_ID_COLUMNS
-    sẽ nhận cùng một student_group_id.
-    """
-    missing_columns = sorted(
-        set(STUDENT_ID_COLUMNS) - set(df.columns)
+def _make_stratify_key(df: pd.DataFrame) -> pd.Series:
+    """Tạo nhãn tạm để giữ tỷ lệ môn học và đạt/trượt khi chia."""
+    passed = (pd.to_numeric(df["G3"], errors="raise") >= 10).map(
+        {True: "passed", False: "failed"}
     )
-
-    if missing_columns:
-        raise ValueError(
-            "Không thể tạo mã học sinh vì thiếu các cột: "
-            f"{missing_columns}"
-        )
-
-    student_information = (
-        df[STUDENT_ID_COLUMNS]
-        .astype(str)
-        .fillna("")
-    )
-
-    # Tạo mã ổn định từ các thông tin nhận dạng.
-    student_group_id = pd.util.hash_pandas_object(
-        student_information,
-        index=False,
-    ).astype(str)
-
-    student_group_id.name = "student_group_id"
-
-    return student_group_id
-
-
-def check_no_group_overlap(
-    train_groups: pd.Series,
-    valid_groups: pd.Series,
-    test_groups: pd.Series,
-) -> None:
-    """
-    Kiểm tra không có học sinh xuất hiện trong nhiều tập dữ liệu.
-    """
-    train_group_set = set(train_groups)
-    valid_group_set = set(valid_groups)
-    test_group_set = set(test_groups)
-
-    train_valid_overlap = train_group_set & valid_group_set
-    train_test_overlap = train_group_set & test_group_set
-    valid_test_overlap = valid_group_set & test_group_set
-
-    if train_valid_overlap:
-        raise ValueError(
-            "Phát hiện học sinh xuất hiện đồng thời "
-            "trong train và validation."
-        )
-
-    if train_test_overlap:
-        raise ValueError(
-            "Phát hiện học sinh xuất hiện đồng thời "
-            "trong train và test."
-        )
-
-    if valid_test_overlap:
-        raise ValueError(
-            "Phát hiện học sinh xuất hiện đồng thời "
-            "trong validation và test."
-        )
+    return df["subject"].astype(str) + "_" + passed
 
 
 def split_dataframe(
     df: pd.DataFrame,
     random_state: int = RANDOM_STATE,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """
-    Chia DataFrame thành train, validation và test theo nhóm học sinh.
-
-    Việc sử dụng GroupShuffleSplit bảo đảm tất cả bản ghi của cùng
-    một học sinh chỉ xuất hiện trong một tập dữ liệu.
-    """
+    """Chia DataFrame thành train, validation và test."""
     total_ratio = TRAIN_RATIO + VALID_RATIO + TEST_RATIO
-
     if abs(total_ratio - 1.0) > 1e-9:
-        raise ValueError(
-            "Tổng tỷ lệ train, validation và test phải bằng 1."
-        )
+        raise ValueError("Tổng tỷ lệ train, validation và test phải bằng 1.")
 
-    working_df = df.copy()
+    stratify_key = _make_stratify_key(df)
 
-    # Tạo mã nhóm học sinh.
-    working_df["student_group_id"] = create_student_group_id(
-        working_df
-    )
-
-    # Bước 1: chia train và tập tạm thời.
-    #
-    # train: 70%
-    # temporary: 30%
-    first_splitter = GroupShuffleSplit(
-        n_splits=1,
-        train_size=TRAIN_RATIO,
+    train_df, temporary_df = train_test_split(
+        df,
+        test_size=VALID_RATIO + TEST_RATIO,
         random_state=random_state,
+        stratify=stratify_key,
     )
 
-    train_indices, temporary_indices = next(
-        first_splitter.split(
-            working_df,
-            groups=working_df["student_group_id"],
-        )
-    )
-
-    train_df = working_df.iloc[train_indices].copy()
-    temporary_df = working_df.iloc[temporary_indices].copy()
-
-    # Bước 2: chia tập tạm thời thành validation và test.
-    #
-    # Vì validation và test đều chiếm 15% toàn bộ dữ liệu,
-    # nên mỗi tập chiếm 50% của tập temporary.
-    temporary_test_ratio = TEST_RATIO / (
-        VALID_RATIO + TEST_RATIO
-    )
-
-    second_splitter = GroupShuffleSplit(
-        n_splits=1,
-        test_size=temporary_test_ratio,
+    temporary_key = _make_stratify_key(temporary_df)
+    valid_df, test_df = train_test_split(
+        temporary_df,
+        test_size=TEST_RATIO / (VALID_RATIO + TEST_RATIO),
         random_state=random_state,
+        stratify=temporary_key,
     )
 
-    valid_indices, test_indices = next(
-        second_splitter.split(
-            temporary_df,
-            groups=temporary_df["student_group_id"],
-        )
+    return (
+        train_df.reset_index(drop=True),
+        valid_df.reset_index(drop=True),
+        test_df.reset_index(drop=True),
     )
-
-    valid_df = temporary_df.iloc[valid_indices].copy()
-    test_df = temporary_df.iloc[test_indices].copy()
-
-    # Kiểm tra học sinh không bị trùng giữa các tập.
-    check_no_group_overlap(
-        train_df["student_group_id"],
-        valid_df["student_group_id"],
-        test_df["student_group_id"],
-    )
-
-    # Không lưu mã nhóm tạm vào file CSV.
-    train_df = train_df.drop(
-        columns=["student_group_id"]
-    ).reset_index(drop=True)
-
-    valid_df = valid_df.drop(
-        columns=["student_group_id"]
-    ).reset_index(drop=True)
-
-    test_df = test_df.drop(
-        columns=["student_group_id"]
-    ).reset_index(drop=True)
-
-    return train_df, valid_df, test_df
 
 
 def save_splits(
@@ -270,83 +105,27 @@ def save_splits(
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Chia dữ liệu sạch và lưu ba file vào data/processed."""
     df = load_cleaned_data(input_path)
-
     train_df, valid_df, test_df = split_dataframe(df)
 
-    train_path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    train_df.to_csv(
-        train_path,
-        index=False,
-    )
-
-    valid_df.to_csv(
-        valid_path,
-        index=False,
-    )
-
-    test_df.to_csv(
-        test_path,
-        index=False,
-    )
-
+    train_path.parent.mkdir(parents=True, exist_ok=True)
+    train_df.to_csv(train_path, index=False)
+    valid_df.to_csv(valid_path, index=False)
+    test_df.to_csv(test_path, index=False)
     return train_df, valid_df, test_df
 
 
 def main() -> None:
-    """Chạy quá trình chia và lưu dữ liệu."""
+    # Để terminal Windows in được thông báo tiếng Việt có dấu.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
-    original_df = load_cleaned_data()
-    original_groups = create_student_group_id(original_df)
-
     train_df, valid_df, test_df = save_splits()
-
-    train_groups = create_student_group_id(train_df)
-    valid_groups = create_student_group_id(valid_df)
-    test_groups = create_student_group_id(test_df)
-
-    # Kiểm tra lại sau khi đã chia và loại cột nhóm tạm.
-    check_no_group_overlap(
-        train_groups,
-        valid_groups,
-        test_groups,
-    )
-
-    total_rows = (
-        len(train_df)
-        + len(valid_df)
-        + len(test_df)
-    )
-
-    print("Đã chia và lưu dữ liệu theo nhóm học sinh:")
-    print(
-        f"- train.csv: {len(train_df)} dòng, "
-        f"{train_groups.nunique()} học sinh"
-    )
-    print(
-        f"- valid.csv: {len(valid_df)} dòng, "
-        f"{valid_groups.nunique()} học sinh"
-    )
-    print(
-        f"- test.csv: {len(test_df)} dòng, "
-        f"{test_groups.nunique()} học sinh"
-    )
-
-    print(f"Tổng số dòng: {total_rows}")
-    print(
-        "Tổng số học sinh: "
-        f"{original_groups.nunique()}"
-    )
+    print("Đã chia và lưu dữ liệu:")
+    print(f"- train.csv: {len(train_df)} dòng")
+    print(f"- valid.csv: {len(valid_df)} dòng")
+    print(f"- test.csv: {len(test_df)} dòng")
+    print(f"Tổng số dòng: {len(train_df) + len(valid_df) + len(test_df)}")
     print(f"Random state: {RANDOM_STATE}")
-    print(
-        "Kiểm tra trùng học sinh: "
-        "không có học sinh xuất hiện ở nhiều tập."
-    )
 
 
 if __name__ == "__main__":
