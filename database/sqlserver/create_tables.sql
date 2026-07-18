@@ -65,14 +65,26 @@ GO
 
 
 /* =========================================================
-   3. REMOVE OLD CLASSIFICATION COLUMN
-   Hỗ trợ database cũ đã từng có Đạt / Trượt
+   3. REMOVE OLD CLASSIFICATION STRUCTURE
+
+   Hỗ trợ các database cũ từng có:
+   - predicted_result
+   - CK_PredictionHistory_Result
+   - index cũ phụ thuộc predicted_result
    ========================================================= */
+
+
+/* ---------------------------------------------------------
+   3.1. Xóa CHECK CONSTRAINT Đạt / Trượt cũ nếu tồn tại
+   --------------------------------------------------------- */
 
 IF EXISTS (
     SELECT 1
     FROM sys.check_constraints
     WHERE name = N'CK_PredictionHistory_Result'
+      AND parent_object_id = OBJECT_ID(
+          N'dbo.PredictionHistory'
+      )
 )
 BEGIN
     ALTER TABLE dbo.PredictionHistory
@@ -80,6 +92,33 @@ BEGIN
 END;
 GO
 
+
+/* ---------------------------------------------------------
+   3.2. Xóa index cũ trước khi xóa predicted_result
+
+   Index này sẽ được tạo lại ở phần INDEXES
+   với cấu trúc mới chỉ gồm:
+   prediction_mode + subject
+   --------------------------------------------------------- */
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_PredictionHistory_ModeSubject'
+      AND object_id = OBJECT_ID(
+          N'dbo.PredictionHistory'
+      )
+)
+BEGIN
+    DROP INDEX IX_PredictionHistory_ModeSubject
+    ON dbo.PredictionHistory;
+END;
+GO
+
+
+/* ---------------------------------------------------------
+   3.3. Xóa cột predicted_result cũ nếu tồn tại
+   --------------------------------------------------------- */
 
 IF COL_LENGTH(
     'dbo.PredictionHistory',
@@ -142,6 +181,8 @@ GO
 
 /* =========================================================
    5. ADD MISSING COLUMNS FOR OLD DATABASES
+
+   Hỗ trợ ModelVersions đã được tạo từ phiên bản cũ.
    ========================================================= */
 
 IF COL_LENGTH(
@@ -273,6 +314,11 @@ GO
    6. INDEXES
    ========================================================= */
 
+
+/* ---------------------------------------------------------
+   Index hỗ trợ truy vấn lịch sử theo thời gian
+   --------------------------------------------------------- */
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.indexes
@@ -283,10 +329,16 @@ IF NOT EXISTS (
 )
 BEGIN
     CREATE INDEX IX_PredictionHistory_CreatedAt
-    ON dbo.PredictionHistory(created_at DESC);
+    ON dbo.PredictionHistory(
+        created_at DESC
+    );
 END;
 GO
 
+
+/* ---------------------------------------------------------
+   Index hỗ trợ lọc theo chế độ dự đoán và môn học
+   --------------------------------------------------------- */
 
 IF NOT EXISTS (
     SELECT 1
@@ -306,6 +358,10 @@ END;
 GO
 
 
+/* ---------------------------------------------------------
+   Index hỗ trợ truy vấn model theo scenario
+   --------------------------------------------------------- */
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.indexes
@@ -316,10 +372,16 @@ IF NOT EXISTS (
 )
 BEGIN
     CREATE INDEX IX_ModelVersions_Scenario
-    ON dbo.ModelVersions(scenario);
+    ON dbo.ModelVersions(
+        scenario
+    );
 END;
 GO
 
+
+/* =========================================================
+   7. FINISH
+   ========================================================= */
 
 PRINT N'Khởi tạo database cho bài toán hồi quy thành công.';
 GO
