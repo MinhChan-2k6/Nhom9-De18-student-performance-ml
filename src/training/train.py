@@ -21,6 +21,7 @@ from src.config.paths import (
 )
 from src.config.settings import (
     FEATURE_SET_ENGINEERED,
+    MODEL_VERSION,
     FEATURE_SETS,
     LOG_FORMAT,
     LOG_LEVEL,
@@ -340,6 +341,7 @@ def build_metrics_payload(
     return {
         "task": "regression",
         "target": TARGET_COLUMN,
+        "model_version": MODEL_VERSION,
         "best_model": best_result.model,
         "best_scenario": best_result.scenario,
         "best_feature_set": best_result.feature_set,
@@ -551,6 +553,7 @@ def train_and_save_scenario(
 
     return {
         "scenario": scenario_name,
+        "model_version": MODEL_VERSION,
         "best_model": best_result.model,
         "best_feature_set": best_result.feature_set,
         "artifact_directory": paths.directory.relative_to(
@@ -601,6 +604,7 @@ def main() -> None:
     training_summary = {
         "task": "regression",
         "target": TARGET_COLUMN,
+        "model_version": MODEL_VERSION,
         "models_created": len(scenario_summaries),
         "scenarios": scenario_summaries,
     }

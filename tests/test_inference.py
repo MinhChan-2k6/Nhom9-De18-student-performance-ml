@@ -29,6 +29,7 @@ def build_service() -> PredictionService:
     service.input_features = ["studytime"]
     service.model = DummyRegressor()
     service.best_model = "dummy_regressor"
+    service.model_version = "1.0.0"
     service.best_scenario = "A_with_G1_G2"
     return service
 
@@ -40,7 +41,12 @@ def test_prediction_output_contains_only_regression_fields() -> None:
     result = service.predict_frame(dataframe)
 
     assert tuple(result.columns) == PREDICTION_OUTPUT_COLUMNS
-    assert tuple(result.columns) == ("predicted_g3", "model", "scenario")
+    assert tuple(result.columns) == (
+        "predicted_g3",
+        "model",
+        "model_version",
+        "scenario",
+    )
     assert result["predicted_g3"].tolist() == [0.0, 12.35, 20.0]
 
 
@@ -59,7 +65,12 @@ def test_single_prediction_returns_numeric_g3(monkeypatch) -> None:
         include_input=False,
     )
 
-    assert list(result.columns) == ["predicted_g3", "model", "scenario"]
+    assert list(result.columns) == [
+        "predicted_g3",
+        "model",
+        "model_version",
+        "scenario",
+    ]
 
 
 def test_predict_single_returns_only_regression_result(monkeypatch) -> None:
@@ -79,5 +90,6 @@ def test_predict_single_returns_only_regression_result(monkeypatch) -> None:
     assert result == {
         "predicted_g3": 0.0,
         "model": "dummy_regressor",
+        "model_version": "1.0.0",
         "scenario": "A_with_G1_G2",
     }

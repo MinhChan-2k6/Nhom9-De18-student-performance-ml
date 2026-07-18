@@ -8,9 +8,8 @@ import requests
 import streamlit as st
 
 from streamlit_app.components.styles import load_css
+from streamlit_app.config import API_BASE_URL
 
-
-API_BASE_URL = "http://127.0.0.1:8000"
 
 
 st.set_page_config(
@@ -357,7 +356,7 @@ try:
 except requests.exceptions.ConnectionError:
     st.error(
         "Không kết nối được FastAPI. Hãy chạy API tại "
-        "http://127.0.0.1:8000."
+        f"{API_BASE_URL}."
     )
     st.stop()
 

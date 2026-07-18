@@ -48,6 +48,10 @@ def get_model_info() -> list[dict[str, Any]]:
                         "best_model",
                         "unknown",
                     ),
+                    "model_version": metrics.get(
+                        "model_version",
+                        "1.0.0",
+                    ),
                     "input_features": metrics.get(
                         "input_features",
                         [],

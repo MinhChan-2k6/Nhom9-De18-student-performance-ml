@@ -1,4 +1,9 @@
+from __future__ import annotations
+
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from api.crud import create_prediction_history
@@ -6,6 +11,8 @@ from api.database import get_db
 from api.schemas import PredictRequest, PredictResponse
 from src.inference.predictor import get_prediction_service
 
+
+LOGGER = logging.getLogger(__name__)
 
 DEFAULT_FEATURES = {
     "school": "gp",
@@ -39,6 +46,41 @@ DEFAULT_FEATURES = {
 router = APIRouter(tags=["Prediction"])
 
 
+def _save_prediction_history_safely(
+    db: Session,
+    *,
+    payload: PredictRequest,
+    features: dict,
+    result: dict,
+) -> tuple[bool, int | None]:
+
+    try:
+        created_history = create_prediction_history(
+            db,
+            full_name=payload.student.full_name,
+            subject=features.get("subject"),
+            prediction_mode=payload.prediction_mode,
+            scenario=result["scenario"],
+            predicted_g3=result["predicted_g3"],
+            model_name=result["model"],
+            model_version=result["model_version"],
+            input_features=features,
+        )
+        return True, int(created_history["prediction_id"])
+    except SQLAlchemyError as exc:
+        LOGGER.warning(
+            "Dự đoán thành công, nhưng lưu lịch sử thất bại: %s",
+            exc.__class__.__name__,
+        )
+        return False, None
+    except Exception as exc:
+        LOGGER.warning(
+            "Dự đoán thành công, nhưng lưu lịch sử thất bại: %s",
+            exc.__class__.__name__,
+        )
+        return False, None
+
+
 @router.post(
     "/predict",
     response_model=PredictResponse,
@@ -48,88 +90,49 @@ def predict_student(
     payload: PredictRequest,
     db: Session = Depends(get_db),
 ) -> PredictResponse:
-    """
-    Dự đoán điểm G3 của học sinh bằng mô hình hồi quy.
 
-    Hệ thống chỉ trả về điểm G3 dự đoán,
-    không phân loại Đạt hoặc Trượt.
-    """
+    features = payload.features.model_dump(exclude_none=True)
+    features = {**DEFAULT_FEATURES, **features}
 
-    # Chỉ lấy những trường người dùng thực sự nhập.
-    features = payload.features.model_dump(
-        exclude_none=True,
-    )
-
-    # Bổ sung giá trị mặc định cho các trường tùy chọn
-    # mà người dùng không cung cấp.
-    features = {
-        **DEFAULT_FEATURES,
-        **features,
-    }
-
-    # Chế độ sử dụng G1 và G2 bắt buộc phải có đủ hai điểm.
     if payload.prediction_mode == "with_g1_g2":
-        if (
-            features.get("G1") is None
-            or features.get("G2") is None
-        ):
+        if features.get("G1") is None or features.get("G2") is None:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=(
-                    "Chế độ có G1 và G2 yêu cầu "
-                    "nhập đủ hai điểm."
-                ),
+                detail="Mode with_g1_g2 requires both G1 and G2.",
             )
 
     try:
-        # Lấy prediction service tương ứng với chế độ dự đoán.
-        service = get_prediction_service(
-            payload.prediction_mode
-        )
-
-        # Thực hiện dự đoán hồi quy.
-        result = service.predict(
-            features=features
-        )
-
-        # Lưu kết quả dự đoán vào SQL Server.
-        create_prediction_history(
-            db,
-            full_name=payload.student.full_name,
-            subject=features.get("subject"),
-            prediction_mode=payload.prediction_mode,
-            scenario=result["scenario"],
-            predicted_g3=result["predicted_g3"],
-            model_name=result["model"],
-            model_version=None,
-            input_features=features,
-        )
-
+        service = get_prediction_service(payload.prediction_mode)
+        result = service.predict(features=features)
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(exc),
         ) from exc
-
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
-
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=(
-                "Không thể dự đoán hoặc lưu lịch sử: "
-                f"{exc}"
-            ),
+            detail=f"Could not run prediction: {exc}",
         ) from exc
 
-    # Chỉ trả kết quả hồi quy.
+    history_saved, history_id = _save_prediction_history_safely(
+        db,
+        payload=payload,
+        features=features,
+        result=result,
+    )
+
     return PredictResponse(
         full_name=payload.student.full_name,
         predicted_g3=float(result["predicted_g3"]),
         model=result["model"],
+        model_version=result["model_version"],
         scenario=result["scenario"],
+        history_saved=history_saved,
+        history_id=history_id,
     )

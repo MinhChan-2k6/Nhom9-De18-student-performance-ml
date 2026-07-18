@@ -1,6 +1,7 @@
 {
     "task": "regression",
     "target": "G3",
+    "model_version": "1.0.0",
     "best_model": "random_forest_grid_search",
     "best_scenario": "B_without_G1_G2",
     "best_feature_set": "raw",

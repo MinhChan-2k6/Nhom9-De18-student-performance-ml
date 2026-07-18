@@ -9,6 +9,7 @@ import pandas as pd
 
 from src.config.paths import get_scenario_artifact_paths
 from src.config.settings import (
+    MODEL_VERSION,
     SCENARIO_WITH_PREVIOUS_GRADES,
     SCENARIO_WITHOUT_PREVIOUS_GRADES,
 )
@@ -25,12 +26,13 @@ MODE_TO_SCENARIO: dict[PredictionMode, str] = {
 PREDICTION_OUTPUT_COLUMNS: tuple[str, ...] = (
     "predicted_g3",
     "model",
+    "model_version",
     "scenario",
 )
 
 
 class PredictionService:
-    """Nạp đúng pipeline theo chế độ và cung cấp API dự đoán dùng chung."""
+    """Nạp đúng pipeline theo chế độ vaf cung cấp API dự đoán dùng chung."""
 
     def __init__(self, prediction_mode: PredictionMode) -> None:
         if prediction_mode not in MODE_TO_SCENARIO:
@@ -54,6 +56,9 @@ class PredictionService:
 
         self.best_scenario = self.metrics.get("best_scenario", self.scenario)
         self.best_model = self.metrics.get("best_model", "unknown")
+        self.model_version = str(
+            self.metrics.get("model_version", MODEL_VERSION)
+        )
         self.input_features = self.metrics.get("input_features", [])
 
         if self.metrics.get("task") not in (None, "regression"):
@@ -100,6 +105,7 @@ class PredictionService:
             {
                 "predicted_g3": predicted_scores,
                 "model": self.best_model,
+                "model_version": self.model_version,
                 "scenario": self.best_scenario,
             },
             index=dataframe.index,
@@ -116,6 +122,7 @@ class PredictionService:
         return {
             "predicted_g3": float(result["predicted_g3"]),
             "model": str(result["model"]),
+            "model_version": str(result["model_version"]),
             "scenario": str(result["scenario"]),
         }
 
@@ -124,6 +131,6 @@ class PredictionService:
 def get_prediction_service(
     prediction_mode: PredictionMode,
 ) -> PredictionService:
-    """Cache riêng một service cho mỗi chế độ dự đoán."""
+    """Cache riêng một service cho mỗi chế độ dự đoans"""
 
     return PredictionService(prediction_mode=prediction_mode)

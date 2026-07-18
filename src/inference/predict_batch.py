@@ -21,12 +21,7 @@ def predict_batch(
     *,
     include_input: bool = True,
 ) -> pd.DataFrame:
-    """Dự đoán toàn bộ dòng trong một DataFrame.
-
-    Các cột đầu vào được giữ nguyên khi ``include_input=True``. Ba cột kết
-    quả được thêm ở cuối: ``predicted_g3``, ``model`` và ``scenario``. Cột
-    ``G3`` nếu có chỉ được giữ để đối chiếu, không được đưa vào model.
-    """
+    """Dự đoán toàn bộ dòng trong một DataFrame."""
 
     if not isinstance(dataframe, pd.DataFrame):
         raise TypeError("dataframe phải là pandas.DataFrame.")
@@ -62,11 +57,7 @@ def predict_batch_csv(
     read_csv_kwargs: dict[str, Any] | None = None,
     save_csv_kwargs: dict[str, Any] | None = None,
 ) -> Path:
-    """Đọc CSV, dự đoán hàng loạt và lưu file kết quả.
-
-    ``read_csv_kwargs`` và ``save_csv_kwargs`` cho phép truyền thêm tùy chọn
-    tương ứng cho ``pandas.read_csv`` và ``DataFrame.to_csv``.
-    """
+    """Đọc CSV, dự đoán hàng loạt và lưu file kết quả."""
 
     input_dataframe = read_csv(input_path, **(read_csv_kwargs or {}))
     output_dataframe = predict_batch(
