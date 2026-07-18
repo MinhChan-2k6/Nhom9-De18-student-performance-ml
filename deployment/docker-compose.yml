@@ -1,0 +1,104 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: student-performance-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-StudentPerf_2026!}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/1433' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    restart: unless-stopped
+
+  init-db:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    image: student-performance-app:latest
+    container_name: student-performance-init-db
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SQLCMDPASSWORD: ${MSSQL_SA_PASSWORD:-StudentPerf_2026!}
+    volumes:
+      - ../database/sqlserver:/app/database/sqlserver:ro
+    command: >
+      bash -c '
+        set -e;
+        echo "Waiting for SQL Server login...";
+        for i in {1..60}; do
+          if sqlcmd -S db,1433 -U sa -P "$${SQLCMDPASSWORD}" -C -Q "SELECT 1" -b >/dev/null 2>&1; then
+            break;
+          fi;
+          if [ "$$i" = "60" ]; then
+            echo "SQL Server was not ready in time.";
+            exit 1;
+          fi;
+          sleep 2;
+        done;
+        echo "Initializing database schema...";
+        sqlcmd -S db,1433 -U sa -P "$${SQLCMDPASSWORD}" -C -i /app/database/sqlserver/create_tables.sql -b;
+        sqlcmd -S db,1433 -U sa -P "$${SQLCMDPASSWORD}" -C -i /app/database/sqlserver/insert_seed_data.sql -b;
+        sqlcmd -S db,1433 -U sa -P "$${SQLCMDPASSWORD}" -C -i /app/database/sqlserver/views.sql -b;
+        echo "Database initialization completed.";
+      '
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    image: student-performance-app:latest
+    container_name: student-performance-api
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    environment:
+      DB_AUTH_MODE: sql
+      DB_SERVER: db,1433
+      DB_NAME: StudentPerformanceDB
+      DB_DRIVER: ODBC Driver 18 for SQL Server
+      DB_USER: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-StudentPerf_2026!}
+      DB_ENCRYPT: "yes"
+      DB_TRUST_SERVER_CERTIFICATE: "yes"
+      DB_CONNECTION_TIMEOUT: "5"
+    ports:
+      - "8000:8000"
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  streamlit:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    image: student-performance-app:latest
+    container_name: student-performance-streamlit
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_BASE_URL: http://api:8000
+      PYTHONPATH: /app
+    ports:
+      - "8501:8501"
+    command: streamlit run streamlit_app/app.py --server.address 0.0.0.0 --server.port 8501
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:

@@ -1,6 +1,7 @@
 {
     "task": "regression",
     "target": "G3",
+    "model_version": "1.0.0",
     "models_created": 2,
     "scenarios": [
         {
@@ -99,7 +100,8 @@
                 "mae": 0.956767,
                 "rmse": 1.389162,
                 "r2": 0.86708
-            }
+            },
+            "model_version": "1.0.0"
         },
         {
             "scenario": "B_without_G1_G2",
@@ -187,7 +189,8 @@
                 "mae": 2.12298,
                 "rmse": 2.775914,
                 "r2": 0.469244
-            }
+            },
+            "model_version": "1.0.0"
         }
     ]
 }

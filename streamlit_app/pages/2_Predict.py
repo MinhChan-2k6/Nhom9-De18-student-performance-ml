@@ -4,6 +4,7 @@ import requests
 import streamlit as st
 
 from streamlit_app.components.styles import load_css
+from streamlit_app.config import API_BASE_URL
 
 
 # --------------------------------------------------
@@ -17,11 +18,7 @@ st.set_page_config(
 
 load_css()
 
-
-# --------------------------------------------------
-# Cấu hình API
-# --------------------------------------------------
-API_URL = "http://127.0.0.1:8000/predict"
+API_URL = f"{API_BASE_URL}/predict"
 
 
 # --------------------------------------------------
@@ -563,7 +560,7 @@ with result_column:
             <h3>🎯 Kết quả dự đoán</h3>
             <p>
                 Điểm G3 được dự đoán bởi mô hình hồi quy
-                và lưu vào SQL Server.
+                và ghi lịch sử khi SQL Server sẵn sàng.
             </p>
         </div>
         """,
@@ -760,6 +757,22 @@ if submitted:
                         "Không xác định",
                     )
 
+                    model_version = prediction_data.get(
+                        "model_version",
+                        "Không xác định",
+                    )
+
+                    history_saved = bool(
+                        prediction_data.get(
+                            "history_saved",
+                            False,
+                        )
+                    )
+
+                    history_id = prediction_data.get(
+                        "history_id"
+                    )
+
                     scenario_name = prediction_data.get(
                         "scenario",
                         prediction_mode_value,
@@ -805,14 +818,31 @@ if submitted:
                     )
 
                     st.write(
+                        "**Phiên bản model:**",
+                        model_version,
+                    )
+
+                    st.write(
                         "**Scenario:**",
                         scenario_name,
                     )
 
-                    st.caption(
-                        "Giá trị dự đoán đã được FastAPI "
-                        "tự động lưu vào SQL Server."
-                    )
+                    if history_saved:
+                        history_message = (
+                            "Giá trị dự đoán đã được lưu "
+                            "vào SQL Server."
+                        )
+                        if history_id is not None:
+                            history_message += (
+                                f" Mã lịch sử: {history_id}."
+                            )
+                        st.caption(history_message)
+                    else:
+                        st.warning(
+                            "Dự đoán thành công nhưng chưa lưu được "
+                            "lịch sử vào SQL Server. Hãy kiểm tra "
+                            "kết nối database và thử lại."
+                        )
 
                 else:
                     display_api_error(
@@ -823,7 +853,7 @@ if submitted:
                 st.error(
                     "Không kết nối được FastAPI. "
                     "Hãy chạy API tại "
-                    "http://127.0.0.1:8000 trước."
+                    f"{API_BASE_URL} trước."
                 )
 
             except requests.exceptions.Timeout:

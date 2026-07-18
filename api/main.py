@@ -5,9 +5,11 @@ from api.routers.batch_predict import router as batch_predict_router
 from api.routers.predict import router as predict_router
 from api.routers.history import router as history_router
 from api.routers.model_info import router as model_info_router
+from src.config.settings import MODEL_VERSION
+
 app = FastAPI(
     title="Student Performance Prediction API",
-    version="1.0.0",
+    version=MODEL_VERSION,
     description="API hồi quy dự đoán điểm cuối kỳ G3.",
 )
 

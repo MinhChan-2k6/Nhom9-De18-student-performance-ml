@@ -11,6 +11,7 @@ import requests
 import streamlit as st
 
 from streamlit_app.components.styles import load_css
+from streamlit_app.config import API_BASE_URL
 
 
 st.set_page_config(
@@ -20,7 +21,7 @@ st.set_page_config(
 )
 load_css()
 
-API_URL = "http://127.0.0.1:8000/predict/batch"
+API_URL = f"{API_BASE_URL}/predict/batch"
 REQUEST_TIMEOUT_SECONDS = 120
 
 MODE_LABEL_TO_VALUE = {
@@ -371,7 +372,7 @@ if predict_button_clicked:
     except requests.exceptions.ConnectionError:
         st.error(
             "Không kết nối được FastAPI. Hãy chạy API tại "
-            "http://127.0.0.1:8000 trước."
+            f"{API_BASE_URL} trước."
         )
     except requests.exceptions.Timeout:
         st.error("API phản hồi quá lâu. Vui lòng thử lại.")

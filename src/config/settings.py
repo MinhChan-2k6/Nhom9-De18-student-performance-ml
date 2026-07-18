@@ -33,6 +33,8 @@ EARLY_PREDICTION_EXCLUDED_COLUMNS: Final[frozenset[str]] = frozenset(
 # ==================================================
 # Cấu hình model
 # ==================================================
+MODEL_VERSION: Final[str] = "1.0.0"
+
 RANDOM_FOREST_BASE_PARAMS: Final[dict[str, object]] = {
     "n_estimators": 300,
     "random_state": RANDOM_STATE,

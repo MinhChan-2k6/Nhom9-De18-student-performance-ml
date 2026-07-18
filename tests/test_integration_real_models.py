@@ -40,15 +40,11 @@ def test_real_model_predicts_one_test_row(
     expected_scenario: str,
     expected_feature_count: int,
 ) -> None:
-    """Load model thật, dự đoán một dòng thật và kiểm tra đầu ra G3."""
-
     assert TEST_PATH.is_file(), f"Không tìm thấy dữ liệu test: {TEST_PATH}"
 
     test_dataframe = pd.read_csv(TEST_PATH)
     assert not test_dataframe.empty, "test.csv đang rỗng."
 
-    # Coi cảnh báo lệch phiên bản scikit-learn là lỗi thật. Điều này giúp test
-    # phát hiện model được train bằng phiên bản khác với môi trường đang chạy.
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
@@ -75,9 +71,16 @@ def test_real_model_predicts_one_test_row(
     )
     result = service.predict(sample_features)
 
-    assert set(result) == {"predicted_g3", "model", "scenario"}
+    assert set(result) == {
+        "predicted_g3",
+        "model",
+        "model_version",
+        "scenario",
+    }
     assert result["scenario"] == expected_scenario
     assert isinstance(result["model"], str) and result["model"]
+    assert isinstance(result["model_version"], str)
+    assert result["model_version"]
 
     predicted_g3 = float(result["predicted_g3"])
     assert np.isfinite(predicted_g3)

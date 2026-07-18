@@ -52,6 +52,7 @@ class DummyPredictionService:
         return {
             "predicted_g3": 13.75,
             "model": "dummy_regressor",
+            "model_version": "1.0.0",
             "scenario": "A_with_G1_G2",
         }
 
@@ -60,6 +61,16 @@ def test_predict_endpoint_returns_regression_response(monkeypatch) -> None:
     monkeypatch.setattr(
         "api.routers.predict.get_prediction_service",
         lambda _mode: DummyPredictionService(),
+    )
+    saved_payload = {}
+
+    def fake_create_prediction_history(_db, **kwargs):
+        saved_payload.update(kwargs)
+        return {"prediction_id": 123}
+
+    monkeypatch.setattr(
+        "api.routers.predict.create_prediction_history",
+        fake_create_prediction_history,
     )
     client = TestClient(app)
     payload = {
@@ -75,8 +86,40 @@ def test_predict_endpoint_returns_regression_response(monkeypatch) -> None:
         "full_name": "Nguyen Van An",
         "predicted_g3": 13.75,
         "model": "dummy_regressor",
+        "model_version": "1.0.0",
         "scenario": "A_with_G1_G2",
+        "history_saved": True,
+        "history_id": 123,
     }
+    assert saved_payload["model_version"] == "1.0.0"
+
+
+def test_predict_endpoint_reports_history_save_failure(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "api.routers.predict.get_prediction_service",
+        lambda _mode: DummyPredictionService(),
+    )
+
+    def fake_create_prediction_history(_db, **_kwargs):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(
+        "api.routers.predict.create_prediction_history",
+        fake_create_prediction_history,
+    )
+
+    client = TestClient(app)
+    payload = {
+        "student": {"full_name": "Nguyen Van An"},
+        "prediction_mode": "with_g1_g2",
+        "features": {**BASE_FEATURES, "G1": 12, "G2": 14},
+    }
+
+    response = client.post("/predict", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["history_saved"] is False
+    assert response.json()["history_id"] is None
 
 
 def test_with_previous_grades_mode_requires_g1_and_g2() -> None:
