@@ -1,5 +1,0 @@
-﻿scenario,model,mae,rmse,r2,tuning,display_name
-B_without_G1_G2,random_forest,2.877081,3.901954,0.242437,,"Không G1, G2 | Random Forest"
-B_without_G1_G2,random_forest_grid_search,2.830153,3.941239,0.227105,"{'method': 'GridSearchCV', 'scoring': 'neg_root_mean_squared_error', 'cv_folds': 3, 'candidate_count': 16, 'total_fits': 48, 'best_cv_rmse': 3.115348, 'best_params': {'model__max_depth': None, 'model__max_features': 'sqrt', 'model__min_samples_leaf': 1, 'model__min_samples_split': 2, 'model__n_estimators': 300}}","Không G1, G2 | RF Grid Search"
-B_without_G1_G2,gradient_boosting,2.858986,3.99676,0.205176,,"Không G1, G2 | Gradient Boosting"
-B_without_G1_G2,linear_regression,2.916233,4.098076,0.164369,,"Không G1, G2 | Linear Regression"
