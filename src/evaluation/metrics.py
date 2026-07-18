@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
 
+from src.config.settings import FEATURE_SET_RAW
 from src.utils.helpers import as_finite_1d_array
 
 
@@ -38,6 +39,7 @@ class EvaluationResult:
     model: str
     metrics: RegressionMetrics
     estimator: Pipeline
+    feature_set: str = FEATURE_SET_RAW
     tuning: dict[str, Any] | None = None
 
     @property
@@ -57,6 +59,7 @@ class EvaluationResult:
         payload: dict[str, Any] = {
             "scenario": self.scenario,
             "model": self.model,
+            "feature_set": self.feature_set,
             **self.metrics.to_dict(),
         }
 
@@ -107,6 +110,7 @@ def evaluate_pipeline(
     y_valid: pd.Series,
     scenario_name: str,
     model_name: str,
+    feature_set: str = FEATURE_SET_RAW,
     tuning: dict[str, Any] | None = None,
 ) -> EvaluationResult:
 
@@ -121,5 +125,6 @@ def evaluate_pipeline(
         model=model_name,
         metrics=metrics,
         estimator=estimator,
+        feature_set=feature_set,
         tuning=tuning,
     )

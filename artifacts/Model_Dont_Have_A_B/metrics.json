@@ -1,13 +1,15 @@
 {
     "task": "regression",
     "target": "G3",
-    "best_model": "random_forest",
+    "best_model": "random_forest_grid_search",
     "best_scenario": "B_without_G1_G2",
+    "best_feature_set": "raw",
     "selection_metric": "validation_rmse",
     "validation_results": [
         {
             "scenario": "B_without_G1_G2",
             "model": "linear_regression",
+            "feature_set": "raw",
             "mae": 2.917968,
             "rmse": 4.099846,
             "r2": 0.163647
@@ -15,6 +17,7 @@
         {
             "scenario": "B_without_G1_G2",
             "model": "random_forest",
+            "feature_set": "raw",
             "mae": 2.877081,
             "rmse": 3.901954,
             "r2": 0.242437
@@ -22,6 +25,7 @@
         {
             "scenario": "B_without_G1_G2",
             "model": "gradient_boosting",
+            "feature_set": "raw",
             "mae": 2.858986,
             "rmse": 3.99676,
             "r2": 0.205176
@@ -29,45 +33,121 @@
         {
             "scenario": "B_without_G1_G2",
             "model": "random_forest_grid_search",
-            "mae": 2.830153,
-            "rmse": 3.941239,
-            "r2": 0.227105,
+            "feature_set": "raw",
+            "mae": 2.866632,
+            "rmse": 3.892388,
+            "r2": 0.246147,
             "tuning": {
                 "method": "GridSearchCV",
+                "cv_strategy": "GroupKFold",
+                "grouping": "student_identity",
+                "unique_training_groups": 463,
                 "scoring": "neg_root_mean_squared_error",
                 "cv_folds": 3,
                 "candidate_count": 16,
                 "total_fits": 48,
-                "best_cv_rmse": 3.115348,
+                "best_cv_rmse": 3.210404,
                 "best_params": {
-                    "model__max_depth": null,
-                    "model__max_features": "sqrt",
+                    "model__max_depth": 10,
+                    "model__max_features": 1.0,
                     "model__min_samples_leaf": 1,
-                    "model__min_samples_split": 2,
+                    "model__min_samples_split": 5,
                     "model__n_estimators": 300
+                }
+            }
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "linear_regression",
+            "feature_set": "engineered",
+            "mae": 2.896633,
+            "rmse": 4.037607,
+            "r2": 0.188847
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "random_forest",
+            "feature_set": "engineered",
+            "mae": 2.883464,
+            "rmse": 3.898795,
+            "r2": 0.243663
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "gradient_boosting",
+            "feature_set": "engineered",
+            "mae": 2.901884,
+            "rmse": 3.957319,
+            "r2": 0.220786
+        },
+        {
+            "scenario": "B_without_G1_G2",
+            "model": "random_forest_grid_search",
+            "feature_set": "engineered",
+            "mae": 2.870218,
+            "rmse": 3.895362,
+            "r2": 0.244994,
+            "tuning": {
+                "method": "GridSearchCV",
+                "cv_strategy": "GroupKFold",
+                "grouping": "student_identity",
+                "unique_training_groups": 463,
+                "scoring": "neg_root_mean_squared_error",
+                "cv_folds": 3,
+                "candidate_count": 16,
+                "total_fits": 48,
+                "best_cv_rmse": 3.217814,
+                "best_params": {
+                    "model__max_depth": 10,
+                    "model__max_features": 1.0,
+                    "model__min_samples_leaf": 1,
+                    "model__min_samples_split": 5,
+                    "model__n_estimators": 200
                 }
             }
         }
     ],
     "hyperparameter_tuning": {
         "method": "GridSearchCV",
+        "cv_strategy": "GroupKFold",
+        "grouping": "student_identity",
+        "unique_training_groups": 463,
         "scoring": "neg_root_mean_squared_error",
         "cv_folds": 3,
         "candidate_count": 16,
         "total_fits": 48,
-        "best_cv_rmse": 3.115348,
+        "best_cv_rmse": 3.210404,
         "best_params": {
-            "model__max_depth": null,
-            "model__max_features": "sqrt",
+            "model__max_depth": 10,
+            "model__max_features": 1.0,
             "model__min_samples_leaf": 1,
-            "model__min_samples_split": 2,
+            "model__min_samples_split": 5,
             "model__n_estimators": 300
         }
     },
+    "feature_engineering": {
+        "selected_feature_set": "raw",
+        "enabled": false,
+        "engineered_features": [],
+        "validation_comparison": {
+            "raw": {
+                "best_model": "random_forest_grid_search",
+                "mae": 2.866632,
+                "rmse": 3.892388,
+                "r2": 0.246147
+            },
+            "engineered": {
+                "best_model": "random_forest_grid_search",
+                "mae": 2.870218,
+                "rmse": 3.895362,
+                "r2": 0.244994
+            }
+        }
+    },
     "test_metrics": {
-        "mae": 2.112764,
-        "rmse": 2.77514,
-        "r2": 0.46954
+        "mae": 2.12298,
+        "rmse": 2.775914,
+        "r2": 0.469244
     },
     "input_features": [
         "subject",
@@ -103,6 +183,40 @@
         "absences"
     ],
     "total_input_features": 31,
+    "model_features_before_preprocessing": [
+        "subject",
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences"
+    ],
+    "total_model_features_before_preprocessing": 31,
     "total_features_after_preprocessing": 58,
     "evaluation_artifacts": {
         "plots_directory": "Model_Dont_Have_A_B/plots",

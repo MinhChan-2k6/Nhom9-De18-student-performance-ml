@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 
 from src.config.settings import (
+    FEATURE_SET_ENGINEERED,
+    FEATURE_SET_RAW,
+    FEATURE_SETS,
     SCENARIO_WITH_PREVIOUS_GRADES,
     SCENARIO_WITHOUT_PREVIOUS_GRADES,
 )
@@ -61,13 +64,43 @@ def results_to_dataframe(
 
     dataframe = pd.DataFrame.from_records(records)
     return dataframe.sort_values(
-        by=["scenario", "rmse", "mae", "r2"],
-        ascending=[True, True, True, False],
+        by=["scenario", "feature_set", "rmse", "mae", "r2"],
+        ascending=[True, True, True, True, False],
         ignore_index=True,
     )
 
 
-def build_result_label(scenario: str, model: str) -> str:
+def summarize_feature_set_results(
+    results: Iterable[EvaluationResult],
+) -> dict[str, dict[str, object]]:
+    """Tóm tắt model tốt nhất của từng feature set trên validation."""
+
+    result_list = list(results)
+    summary: dict[str, dict[str, object]] = {}
+
+    for feature_set in FEATURE_SETS:
+        candidates = [
+            result
+            for result in result_list
+            if result.feature_set == feature_set
+        ]
+        if not candidates:
+            continue
+
+        best_result = select_best_result(candidates)
+        summary[feature_set] = {
+            "best_model": best_result.model,
+            **best_result.metrics.to_dict(),
+        }
+
+    return summary
+
+
+def build_result_label(
+    scenario: str,
+    model: str,
+    feature_set: str = FEATURE_SET_RAW,
+) -> str:
     scenario_label = (
         "Có G1, G2"
         if scenario == SCENARIO_WITH_PREVIOUS_GRADES
@@ -85,4 +118,9 @@ def build_result_label(scenario: str, model: str) -> str:
         "random_forest_grid_search": "RF Grid Search",
     }.get(model, model.replace("_", " ").title())
 
-    return f"{scenario_label} | {model_label}"
+    feature_set_label = {
+        FEATURE_SET_RAW: "Đặc trưng gốc",
+        FEATURE_SET_ENGINEERED: "Có feature engineering",
+    }.get(feature_set, feature_set)
+
+    return f"{scenario_label} | {feature_set_label} | {model_label}"

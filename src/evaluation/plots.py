@@ -51,10 +51,11 @@ def plot_model_comparison(
     _prepare_output_directory(output_dir)
     dataframe = results_to_dataframe(results)
     dataframe["label"] = [
-        build_result_label(scenario, model)
-        for scenario, model in zip(
+        build_result_label(scenario, model, feature_set)
+        for scenario, model, feature_set in zip(
             dataframe["scenario"],
             dataframe["model"],
+            dataframe["feature_set"],
             strict=True,
         )
     ]
@@ -292,10 +293,11 @@ def save_model_comparison(
 
     dataframe = results_to_dataframe(results)
     dataframe["display_name"] = [
-        build_result_label(scenario, model)
-        for scenario, model in zip(
+        build_result_label(scenario, model, feature_set)
+        for scenario, model, feature_set in zip(
             dataframe["scenario"],
             dataframe["model"],
+            dataframe["feature_set"],
             strict=True,
         )
     ]

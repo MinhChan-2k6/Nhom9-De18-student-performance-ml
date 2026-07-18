@@ -1,5 +1,9 @@
-﻿scenario,model,mae,rmse,r2,tuning,display_name
-A_with_G1_G2,random_forest_grid_search,1.135425,1.886236,0.82297,"{'method': 'GridSearchCV', 'scoring': 'neg_root_mean_squared_error', 'cv_folds': 3, 'candidate_count': 16, 'total_fits': 48, 'best_cv_rmse': 1.594842, 'best_params': {'model__max_depth': None, 'model__max_features': 1.0, 'model__min_samples_leaf': 1, 'model__min_samples_split': 2, 'model__n_estimators': 200}}","Có G1, G2 | RF Grid Search"
-A_with_G1_G2,random_forest,1.142527,1.899419,0.820487,,"Có G1, G2 | Random Forest"
-A_with_G1_G2,gradient_boosting,1.132185,1.900339,0.820313,,"Có G1, G2 | Gradient Boosting"
-A_with_G1_G2,linear_regression,1.203436,2.128371,0.774602,,"Có G1, G2 | Linear Regression"
+﻿scenario,model,feature_set,mae,rmse,r2,tuning,display_name
+A_with_G1_G2,random_forest_grid_search,engineered,1.123748,1.866449,0.826665,"{'method': 'GridSearchCV', 'cv_strategy': 'GroupKFold', 'grouping': 'student_identity', 'unique_training_groups': 463, 'scoring': 'neg_root_mean_squared_error', 'cv_folds': 3, 'candidate_count': 16, 'total_fits': 48, 'best_cv_rmse': 1.368974, 'best_params': {'model__max_depth': 10, 'model__max_features': 1.0, 'model__min_samples_leaf': 1, 'model__min_samples_split': 5, 'model__n_estimators': 300}}","Có G1, G2 | Có feature engineering | RF Grid Search"
+A_with_G1_G2,random_forest,engineered,1.12366,1.87209,0.825615,,"Có G1, G2 | Có feature engineering | Random Forest"
+A_with_G1_G2,gradient_boosting,engineered,1.122877,1.903338,0.819745,,"Có G1, G2 | Có feature engineering | Gradient Boosting"
+A_with_G1_G2,linear_regression,engineered,1.18211,2.05874,0.789109,,"Có G1, G2 | Có feature engineering | Linear Regression"
+A_with_G1_G2,random_forest_grid_search,raw,1.140948,1.893636,0.821578,"{'method': 'GridSearchCV', 'cv_strategy': 'GroupKFold', 'grouping': 'student_identity', 'unique_training_groups': 463, 'scoring': 'neg_root_mean_squared_error', 'cv_folds': 3, 'candidate_count': 16, 'total_fits': 48, 'best_cv_rmse': 1.405432, 'best_params': {'model__max_depth': None, 'model__max_features': 1.0, 'model__min_samples_leaf': 1, 'model__min_samples_split': 5, 'model__n_estimators': 300}}","Có G1, G2 | Đặc trưng gốc | RF Grid Search"
+A_with_G1_G2,random_forest,raw,1.142527,1.899419,0.820487,,"Có G1, G2 | Đặc trưng gốc | Random Forest"
+A_with_G1_G2,gradient_boosting,raw,1.132185,1.900339,0.820313,,"Có G1, G2 | Đặc trưng gốc | Gradient Boosting"
+A_with_G1_G2,linear_regression,raw,1.203436,2.128371,0.774602,,"Có G1, G2 | Đặc trưng gốc | Linear Regression"

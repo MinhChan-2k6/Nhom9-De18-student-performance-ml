@@ -9,7 +9,6 @@ __pycache__/
 notebooks/
 tests/
 _BaoCao/
-data/
 outputs/
 
 .env
