@@ -19,6 +19,13 @@ SCENARIOS: Final[tuple[str, ...]] = (
     SCENARIO_WITHOUT_PREVIOUS_GRADES,
 )
 
+FEATURE_SET_RAW: Final[str] = "raw"
+FEATURE_SET_ENGINEERED: Final[str] = "engineered"
+FEATURE_SETS: Final[tuple[str, ...]] = (
+    FEATURE_SET_RAW,
+    FEATURE_SET_ENGINEERED,
+)
+
 EARLY_PREDICTION_EXCLUDED_COLUMNS: Final[frozenset[str]] = frozenset(
     {"G1", "G2"}
 )

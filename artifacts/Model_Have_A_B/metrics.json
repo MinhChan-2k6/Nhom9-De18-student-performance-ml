@@ -3,11 +3,13 @@
     "target": "G3",
     "best_model": "random_forest_grid_search",
     "best_scenario": "A_with_G1_G2",
+    "best_feature_set": "engineered",
     "selection_metric": "validation_rmse",
     "validation_results": [
         {
             "scenario": "A_with_G1_G2",
             "model": "linear_regression",
+            "feature_set": "raw",
             "mae": 1.203436,
             "rmse": 2.128371,
             "r2": 0.774602
@@ -15,6 +17,7 @@
         {
             "scenario": "A_with_G1_G2",
             "model": "random_forest",
+            "feature_set": "raw",
             "mae": 1.142527,
             "rmse": 1.899419,
             "r2": 0.820487
@@ -22,6 +25,7 @@
         {
             "scenario": "A_with_G1_G2",
             "model": "gradient_boosting",
+            "feature_set": "raw",
             "mae": 1.132185,
             "rmse": 1.900339,
             "r2": 0.820313
@@ -29,45 +33,129 @@
         {
             "scenario": "A_with_G1_G2",
             "model": "random_forest_grid_search",
-            "mae": 1.135425,
-            "rmse": 1.886236,
-            "r2": 0.82297,
+            "feature_set": "raw",
+            "mae": 1.140948,
+            "rmse": 1.893636,
+            "r2": 0.821578,
             "tuning": {
                 "method": "GridSearchCV",
+                "cv_strategy": "GroupKFold",
+                "grouping": "student_identity",
+                "unique_training_groups": 463,
                 "scoring": "neg_root_mean_squared_error",
                 "cv_folds": 3,
                 "candidate_count": 16,
                 "total_fits": 48,
-                "best_cv_rmse": 1.594842,
+                "best_cv_rmse": 1.405432,
                 "best_params": {
                     "model__max_depth": null,
                     "model__max_features": 1.0,
                     "model__min_samples_leaf": 1,
-                    "model__min_samples_split": 2,
-                    "model__n_estimators": 200
+                    "model__min_samples_split": 5,
+                    "model__n_estimators": 300
+                }
+            }
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "linear_regression",
+            "feature_set": "engineered",
+            "mae": 1.18211,
+            "rmse": 2.05874,
+            "r2": 0.789109
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "random_forest",
+            "feature_set": "engineered",
+            "mae": 1.12366,
+            "rmse": 1.87209,
+            "r2": 0.825615
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "gradient_boosting",
+            "feature_set": "engineered",
+            "mae": 1.122877,
+            "rmse": 1.903338,
+            "r2": 0.819745
+        },
+        {
+            "scenario": "A_with_G1_G2",
+            "model": "random_forest_grid_search",
+            "feature_set": "engineered",
+            "mae": 1.123748,
+            "rmse": 1.866449,
+            "r2": 0.826665,
+            "tuning": {
+                "method": "GridSearchCV",
+                "cv_strategy": "GroupKFold",
+                "grouping": "student_identity",
+                "unique_training_groups": 463,
+                "scoring": "neg_root_mean_squared_error",
+                "cv_folds": 3,
+                "candidate_count": 16,
+                "total_fits": 48,
+                "best_cv_rmse": 1.368974,
+                "best_params": {
+                    "model__max_depth": 10,
+                    "model__max_features": 1.0,
+                    "model__min_samples_leaf": 1,
+                    "model__min_samples_split": 5,
+                    "model__n_estimators": 300
                 }
             }
         }
     ],
     "hyperparameter_tuning": {
         "method": "GridSearchCV",
+        "cv_strategy": "GroupKFold",
+        "grouping": "student_identity",
+        "unique_training_groups": 463,
         "scoring": "neg_root_mean_squared_error",
         "cv_folds": 3,
         "candidate_count": 16,
         "total_fits": 48,
-        "best_cv_rmse": 1.594842,
+        "best_cv_rmse": 1.368974,
         "best_params": {
-            "model__max_depth": null,
+            "model__max_depth": 10,
             "model__max_features": 1.0,
             "model__min_samples_leaf": 1,
-            "model__min_samples_split": 2,
-            "model__n_estimators": 200
+            "model__min_samples_split": 5,
+            "model__n_estimators": 300
+        }
+    },
+    "feature_engineering": {
+        "selected_feature_set": "engineered",
+        "enabled": true,
+        "engineered_features": [
+            "parent_education_mean",
+            "alcohol_consumption_mean",
+            "social_activity_score",
+            "support_count",
+            "absence_log1p",
+            "previous_grade_mean",
+            "grade_trend"
+        ],
+        "validation_comparison": {
+            "raw": {
+                "best_model": "random_forest_grid_search",
+                "mae": 1.140948,
+                "rmse": 1.893636,
+                "r2": 0.821578
+            },
+            "engineered": {
+                "best_model": "random_forest_grid_search",
+                "mae": 1.123748,
+                "rmse": 1.866449,
+                "r2": 0.826665
+            }
         }
     },
     "test_metrics": {
-        "mae": 0.966044,
-        "rmse": 1.425448,
-        "r2": 0.860046
+        "mae": 0.956767,
+        "rmse": 1.389162,
+        "r2": 0.86708
     },
     "input_features": [
         "subject",
@@ -105,7 +193,50 @@
         "G2"
     ],
     "total_input_features": 33,
-    "total_features_after_preprocessing": 60,
+    "model_features_before_preprocessing": [
+        "subject",
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "G1",
+        "G2",
+        "parent_education_mean",
+        "alcohol_consumption_mean",
+        "social_activity_score",
+        "support_count",
+        "absence_log1p",
+        "previous_grade_mean",
+        "grade_trend"
+    ],
+    "total_model_features_before_preprocessing": 40,
+    "total_features_after_preprocessing": 67,
     "evaluation_artifacts": {
         "plots_directory": "Model_Have_A_B/plots",
         "test_predictions": "Model_Have_A_B/test_predictions.csv",
