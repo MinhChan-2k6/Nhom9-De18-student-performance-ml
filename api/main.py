@@ -21,7 +21,6 @@ app.add_middleware(
 
 app.include_router(predict_router)
 app.include_router(batch_predict_router)
-app.include_router(predict_router)
 app.include_router(history_router)
 app.include_router(model_info_router)
 

@@ -13,6 +13,7 @@ from api.crud import (
 from api.database import get_db
 from api.schemas import PredictionHistoryResponse
 
+
 router = APIRouter(
     prefix="/history",
     tags=["History"],
@@ -22,7 +23,13 @@ router = APIRouter(
 def format_history_row(
     row: dict[str, Any],
 ) -> PredictionHistoryResponse:
-    """Chuyển dữ liệu SQL Server thành response cho API."""
+    """
+    Chuyển dữ liệu lịch sử từ SQL Server
+    thành response của API.
+
+    Bài toán là thuần hồi quy nên chỉ trả về
+    điểm G3 dự đoán, không có Đạt/Trượt.
+    """
 
     input_features = None
     input_json = row.get("input_json")
@@ -30,6 +37,7 @@ def format_history_row(
     if input_json:
         try:
             input_features = json.loads(input_json)
+
         except (json.JSONDecodeError, TypeError):
             input_features = None
 
@@ -41,7 +49,6 @@ def format_history_row(
         prediction_mode=row["prediction_mode"],
         scenario=row.get("scenario"),
         predicted_g3=float(row["predicted_g3"]),
-        predicted_result=row["predicted_result"],
         model_name=row["model_name"],
         model_version=row.get("model_version"),
         input_features=input_features,
@@ -63,6 +70,10 @@ def read_prediction_history(
     ),
     db: Session = Depends(get_db),
 ) -> list[PredictionHistoryResponse]:
+    """
+    Lấy danh sách các lần dự đoán G3 gần nhất.
+    """
+
     try:
         rows = get_prediction_history(
             db,
@@ -77,7 +88,10 @@ def read_prediction_history(
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Không thể lấy lịch sử dự đoán: {exc}",
+            detail=(
+                "Không thể lấy lịch sử dự đoán: "
+                f"{exc}"
+            ),
         ) from exc
 
 
@@ -90,6 +104,10 @@ def read_prediction_detail(
     prediction_id: int,
     db: Session = Depends(get_db),
 ) -> PredictionHistoryResponse:
+    """
+    Lấy chi tiết một lần dự đoán theo prediction_id.
+    """
+
     try:
         row = get_prediction_by_id(
             db,
@@ -110,5 +128,8 @@ def read_prediction_detail(
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Không thể đọc lịch sử dự đoán: {exc}",
+            detail=(
+                "Không thể đọc lịch sử dự đoán: "
+                f"{exc}"
+            ),
         ) from exc

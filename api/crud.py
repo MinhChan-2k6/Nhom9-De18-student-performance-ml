@@ -15,13 +15,17 @@ def create_prediction_history(
     prediction_mode: str,
     scenario: str | None,
     predicted_g3: float,
-    predicted_result: str,
     model_name: str,
     input_features: dict[str, Any],
     student_code: str | None = None,
     model_version: str | None = None,
 ) -> dict[str, Any]:
-    """Lưu một lần dự đoán vào bảng PredictionHistory."""
+    """
+    Lưu một lần dự đoán hồi quy vào bảng PredictionHistory.
+
+    Hệ thống chỉ lưu điểm G3 dự đoán,
+    không lưu kết quả Đạt/Trượt.
+    """
 
     query = text(
         """
@@ -32,7 +36,6 @@ def create_prediction_history(
             prediction_mode,
             scenario,
             predicted_g3,
-            predicted_result,
             model_name,
             model_version,
             input_json
@@ -45,7 +48,6 @@ def create_prediction_history(
             INSERTED.prediction_mode,
             INSERTED.scenario,
             INSERTED.predicted_g3,
-            INSERTED.predicted_result,
             INSERTED.model_name,
             INSERTED.model_version,
             INSERTED.created_at
@@ -56,7 +58,6 @@ def create_prediction_history(
             :prediction_mode,
             :scenario,
             :predicted_g3,
-            :predicted_result,
             :model_name,
             :model_version,
             :input_json
@@ -70,8 +71,10 @@ def create_prediction_history(
         "subject": subject,
         "prediction_mode": prediction_mode,
         "scenario": scenario,
-        "predicted_g3": round(float(predicted_g3), 2),
-        "predicted_result": predicted_result,
+        "predicted_g3": round(
+            float(predicted_g3),
+            2,
+        ),
         "model_name": model_name,
         "model_version": model_version,
         "input_json": json.dumps(
@@ -81,8 +84,13 @@ def create_prediction_history(
     }
 
     try:
-        result = db.execute(query, parameters)
+        result = db.execute(
+            query,
+            parameters,
+        )
+
         inserted_row = result.mappings().one()
+
         db.commit()
 
         return dict(inserted_row)
@@ -97,9 +105,14 @@ def get_prediction_history(
     *,
     limit: int = 100,
 ) -> list[dict[str, Any]]:
-    """Lấy danh sách lịch sử dự đoán mới nhất."""
+    """
+    Lấy danh sách lịch sử dự đoán mới nhất.
+    """
 
-    safe_limit = max(1, min(limit, 500))
+    safe_limit = max(
+        1,
+        min(limit, 500),
+    )
 
     query = text(
         f"""
@@ -111,7 +124,6 @@ def get_prediction_history(
             prediction_mode,
             scenario,
             predicted_g3,
-            predicted_result,
             model_name,
             model_version,
             input_json,
@@ -133,7 +145,9 @@ def get_prediction_by_id(
     db: Session,
     prediction_id: int,
 ) -> dict[str, Any] | None:
-    """Tìm một lịch sử dự đoán theo ID."""
+    """
+    Lấy chi tiết một lần dự đoán theo ID.
+    """
 
     query = text(
         """
@@ -145,7 +159,6 @@ def get_prediction_by_id(
             prediction_mode,
             scenario,
             predicted_g3,
-            predicted_result,
             model_name,
             model_version,
             input_json,
@@ -157,9 +170,15 @@ def get_prediction_by_id(
 
     result = db.execute(
         query,
-        {"prediction_id": prediction_id},
+        {
+            "prediction_id": prediction_id,
+        },
     )
 
     row = result.mappings().first()
 
-    return dict(row) if row else None
+    return (
+        dict(row)
+        if row
+        else None
+    )
