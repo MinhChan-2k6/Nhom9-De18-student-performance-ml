@@ -48,6 +48,13 @@ BASE_FEATURES = {
 
 
 class DummyPredictionService:
+    metrics = {
+        "test_metrics": {
+            "mae": 0.8,
+            "rmse": 1.25,
+        }
+    }
+
     def predict(self, features):
         return {
             "predicted_g3": 13.75,
@@ -85,6 +92,10 @@ def test_predict_endpoint_returns_regression_response(monkeypatch) -> None:
     assert response.json() == {
         "full_name": "Nguyen Van An",
         "predicted_g3": 13.75,
+        "mae": 0.8,
+        "rmse": 1.25,
+        "prediction_lower": 12.5,
+        "prediction_upper": 15.0,
         "model": "dummy_regressor",
         "model_version": "1.0.0",
         "scenario": "A_with_G1_G2",
@@ -118,8 +129,13 @@ def test_predict_endpoint_reports_history_save_failure(monkeypatch) -> None:
     response = client.post("/predict", json=payload)
 
     assert response.status_code == 200
-    assert response.json()["history_saved"] is False
-    assert response.json()["history_id"] is None
+    response_data = response.json()
+    assert response_data["predicted_g3"] == 13.75
+    assert response_data["model_version"] == "1.0.0"
+    assert response_data["mae"] == 0.8
+    assert response_data["rmse"] == 1.25
+    assert response_data["history_saved"] is False
+    assert response_data["history_id"] is None
 
 
 def test_with_previous_grades_mode_requires_g1_and_g2() -> None:
