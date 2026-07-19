@@ -1,3 +1,9 @@
+"""Tạo các biểu đồ EDA cho project Student Performance.
+
+File này dùng để tạo lại các biểu đồ đã làm trong notebook 01.
+File chỉ dùng để tạo hình ảnh, không huấn luyện mô hình và không chia dữ liệu.
+Các bước đó được thực hiện ở các module khác.
+"""
 
 from __future__ import annotations
 
