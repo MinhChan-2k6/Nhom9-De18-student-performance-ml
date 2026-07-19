@@ -1,0 +1,12 @@
+{
+  "rows": 1044,
+  "columns": 34,
+  "subjects": {
+    "portuguese": 649,
+    "math": 395
+  },
+  "g3_mean": 11.341954022988507,
+  "g3_median": 11.0,
+  "missing_values": 0,
+  "duplicate_rows": 0
+}
