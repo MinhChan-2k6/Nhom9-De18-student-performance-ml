@@ -1,8 +1,8 @@
-"""Generate EDA figures for the Student Performance project.
+"""Tạo các biểu đồ EDA cho project Student Performance.
 
-This script is the reproducible source for the EDA images that were originally
-created in notebook 01. It does not train models and does not split data; those
-steps stay in the data/training pipeline modules.
+File này dùng để tạo lại các biểu đồ đã làm trong notebook 01.
+File chỉ dùng để tạo hình ảnh, không huấn luyện mô hình và không chia dữ liệu.
+Các bước đó được thực hiện ở các module khác.
 """
 
 from __future__ import annotations
