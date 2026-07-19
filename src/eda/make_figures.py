@@ -1,10 +1,3 @@
-"""Generate EDA figures for the Student Performance project.
-
-This script is the reproducible source for the EDA images that were originally
-created in notebook 01. It does not train models and does not split data; those
-steps stay in the data/training pipeline modules.
-"""
-
 from __future__ import annotations
 
 import argparse
