@@ -18,7 +18,7 @@ app = FastAPI(
 
 # ==================================================
 # CORS
-# Cho phép Streamlit gọi FastAPI
+#  Streamlit gọi FastAPI
 # ==================================================
 app.add_middleware(
     CORSMiddleware,

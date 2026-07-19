@@ -1,13 +1,7 @@
-<<<<<<< Updated upstream
 from __future__ import annotations
 
 import logging
-=======
-ưfrom __future__ import annotations
-
-import logging
 from typing import Any
->>>>>>> Stashed changes
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
@@ -56,10 +50,6 @@ DEFAULT_FEATURES: dict[str, Any] = {
 
 # ==================================================
 # METRICS DỰ PHÒNG
-#
-# Bình thường endpoint lấy trực tiếp test_metrics từ metrics.json
-# đã được PredictionService nạp. Các giá trị dưới đây chỉ dùng khi
-# service giả lập trong test hoặc artifact cũ chưa có test_metrics.
 # ==================================================
 FALLBACK_SCENARIO_METRICS: dict[str, dict[str, float]] = {
     "A_with_G1_G2": {
@@ -78,8 +68,6 @@ router = APIRouter(
 )
 
 
-<<<<<<< Updated upstream
-=======
 def _get_reference_metrics(
     service: PredictionService,
     scenario: str,
@@ -111,23 +99,16 @@ def _get_reference_metrics(
     )
 
 
->>>>>>> Stashed changes
 def _save_prediction_history_safely(
     db: Session,
     *,
     payload: PredictRequest,
-<<<<<<< Updated upstream
-    features: dict,
-    result: dict,
-) -> tuple[bool, int | None]:
-=======
     features: dict[str, Any],
     result: dict[str, Any],
 ) -> tuple[bool, int | None]:
     """
     Lưu lịch sử nhưng không làm hỏng kết quả dự đoán nếu SQL Server lỗi.
     """
->>>>>>> Stashed changes
 
     try:
         created_history = create_prediction_history(
@@ -135,17 +116,10 @@ def _save_prediction_history_safely(
             full_name=payload.student.full_name,
             subject=features.get("subject"),
             prediction_mode=payload.prediction_mode,
-<<<<<<< Updated upstream
-            scenario=result["scenario"],
-            predicted_g3=result["predicted_g3"],
-            model_name=result["model"],
-            model_version=result["model_version"],
-=======
             scenario=str(result["scenario"]),
             predicted_g3=float(result["predicted_g3"]),
             model_name=str(result["model"]),
             model_version=str(result["model_version"]),
->>>>>>> Stashed changes
             input_features=features,
         )
         return True, int(created_history["prediction_id"])
@@ -187,11 +161,7 @@ def predict_student(
     if payload.prediction_mode == "with_g1_g2":
         if features.get("G1") is None or features.get("G2") is None:
             raise HTTPException(
-<<<<<<< Updated upstream
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-=======
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
->>>>>>> Stashed changes
                 detail="Mode with_g1_g2 requires both G1 and G2.",
             )
 
@@ -213,11 +183,7 @@ def predict_student(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(exc),
         ) from exc
-<<<<<<< Updated upstream
-    except ValueError as exc:
-=======
     except (KeyError, TypeError, ValueError) as exc:
->>>>>>> Stashed changes
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
@@ -253,9 +219,6 @@ def predict_student(
         model=model_name,
         model_version=model_version,
         scenario=scenario,
-<<<<<<< Updated upstream
-=======
         history_saved=history_saved,
         history_id=history_id,
->>>>>>> Stashed changes
     )

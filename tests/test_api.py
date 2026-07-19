@@ -129,10 +129,6 @@ def test_predict_endpoint_reports_history_save_failure(monkeypatch) -> None:
     response = client.post("/predict", json=payload)
 
     assert response.status_code == 200
-<<<<<<< Updated upstream
-    assert response.json()["history_saved"] is False
-    assert response.json()["history_id"] is None
-=======
     response_data = response.json()
     assert response_data["predicted_g3"] == 13.75
     assert response_data["model_version"] == "1.0.0"
@@ -140,7 +136,6 @@ def test_predict_endpoint_reports_history_save_failure(monkeypatch) -> None:
     assert response_data["rmse"] == 1.25
     assert response_data["history_saved"] is False
     assert response_data["history_id"] is None
->>>>>>> Stashed changes
 
 
 def test_with_previous_grades_mode_requires_g1_and_g2() -> None:
