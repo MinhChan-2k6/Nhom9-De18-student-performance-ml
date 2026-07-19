@@ -10,7 +10,7 @@ from api.routers.predict import router as predict_router
 
 app = FastAPI(
     title="Student Performance Prediction API",
-    version="1.0.0",
+    version=MODEL_VERSION,
     description="API hồi quy dự đoán điểm cuối kỳ G3.",
 )
 

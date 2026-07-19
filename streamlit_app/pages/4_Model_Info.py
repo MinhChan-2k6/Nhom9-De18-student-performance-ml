@@ -9,9 +9,8 @@ import requests
 import streamlit as st
 
 from streamlit_app.components.styles import load_css
+from streamlit_app.config import API_BASE_URL
 
-
-API_BASE_URL = "http://127.0.0.1:8000"
 
 
 # ==================================================

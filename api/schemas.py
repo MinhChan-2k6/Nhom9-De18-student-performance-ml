@@ -7,7 +7,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class StudentInformation(BaseModel):
-    """Thông tin cơ bản của học sinh."""
 
     full_name: str = Field(
         min_length=2,
@@ -16,13 +15,6 @@ class StudentInformation(BaseModel):
 
 
 class PredictionFeatures(BaseModel):
-    """
-    Đặc trưng đầu vào cho hai mô hình hồi quy dự đoán điểm G3.
-
-    Các trường cơ bản là bắt buộc.
-    Các trường chi tiết là tùy chọn và API sẽ bổ sung
-    giá trị mặc định nếu người dùng không cung cấp.
-    """
 
     model_config = ConfigDict(
         extra="forbid",
@@ -229,7 +221,6 @@ class PredictionFeatures(BaseModel):
 
 
 class PredictRequest(BaseModel):
-    """Request gửi đến endpoint POST /predict."""
 
     student: StudentInformation
 
@@ -281,16 +272,16 @@ class PredictResponse(BaseModel):
 
     model: str
 
+    model_version: str
+
     scenario: str
+
+    history_saved: bool
+
+    history_id: int | None = None
 
 
 class PredictionHistoryResponse(BaseModel):
-    """
-    Dữ liệu một bản ghi lịch sử dự đoán.
-
-    Không chứa predicted_result vì bài toán
-    được triển khai thuần hồi quy.
-    """
 
     prediction_id: int
 

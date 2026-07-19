@@ -4,6 +4,7 @@ import requests
 import streamlit as st
 
 from streamlit_app.components.styles import load_css
+from streamlit_app.config import API_BASE_URL
 
 
 # --------------------------------------------------
@@ -17,11 +18,7 @@ st.set_page_config(
 
 load_css()
 
-
-# --------------------------------------------------
-# Cấu hình API
-# --------------------------------------------------
-API_URL = "http://127.0.0.1:8000/predict"
+API_URL = f"{API_BASE_URL}/predict"
 
 
 # --------------------------------------------------
@@ -1471,6 +1468,11 @@ if submitted:
                         model_name,
                     )
 
+
+                    st.write(
+                        "**Phiên bản model:**",
+                        model_version,
+                    )
 
                     st.write(
                         "**Scenario:**",

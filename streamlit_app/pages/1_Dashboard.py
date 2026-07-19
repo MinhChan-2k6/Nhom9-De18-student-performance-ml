@@ -7,13 +7,10 @@ import pandas as pd
 import requests
 import streamlit as st
 
+
 from streamlit_app.components.styles import load_css
+from streamlit_app.config import API_BASE_URL
 
-
-# ==================================================
-# CẤU HÌNH
-# ==================================================
-API_BASE_URL = "http://127.0.0.1:8000"
 
 
 st.set_page_config(
@@ -563,7 +560,7 @@ with status_col1:
                 {api_text}
             </div>
             <div class="status-note">
-                http://127.0.0.1:8000
+                {API_BASE_URL}
             </div>
         </div>
         """,
