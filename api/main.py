@@ -6,6 +6,7 @@ from api.routers.health import router as health_router
 from api.routers.history import router as history_router
 from api.routers.model_info import router as model_info_router
 from api.routers.predict import router as predict_router
+from src.config.settings import MODEL_VERSION
 
 
 app = FastAPI(

@@ -1330,10 +1330,33 @@ if submitted:
                     )
 
 
+                    model_version = (
+                        prediction_data.get(
+                            "model_version",
+                            "Không xác định",
+                        )
+                    )
+
+
                     scenario_name = (
                         prediction_data.get(
                             "scenario",
                             prediction_mode_value,
+                        )
+                    )
+
+
+                    history_saved = bool(
+                        prediction_data.get(
+                            "history_saved",
+                            False,
+                        )
+                    )
+
+
+                    history_id = (
+                        prediction_data.get(
+                            "history_id"
                         )
                     )
 
@@ -1480,13 +1503,22 @@ if submitted:
                     )
 
 
-                    st.caption(
-                        (
-                            "Giá trị dự đoán G3 "
-                            "đã được FastAPI tự động "
+                    if history_saved:
+                        history_message = (
+                            "Giá trị dự đoán G3 đã được "
                             "lưu vào SQL Server."
                         )
-                    )
+                        if history_id is not None:
+                            history_message += (
+                                f" Mã lịch sử: {history_id}."
+                            )
+                        st.caption(history_message)
+                    else:
+                        st.warning(
+                            "Dự đoán đã thành công nhưng chưa thể "
+                            "lưu lịch sử vào SQL Server. Bạn vẫn "
+                            "có thể sử dụng kết quả phía trên."
+                        )
 
 
                 else:
