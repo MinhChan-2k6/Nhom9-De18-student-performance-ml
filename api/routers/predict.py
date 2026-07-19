@@ -12,8 +12,9 @@ from api.schemas import PredictRequest, PredictResponse
 from src.inference.predictor import get_prediction_service
 
 
-LOGGER = logging.getLogger(__name__)
-
+# ==================================================
+# GIÁ TRỊ MẶC ĐỊNH CHO CÁC ĐẶC TRƯNG TÙY CHỌN
+# ==================================================
 DEFAULT_FEATURES = {
     "school": "gp",
     "address": "u",
@@ -43,7 +44,31 @@ DEFAULT_FEATURES = {
 }
 
 
-router = APIRouter(tags=["Prediction"])
+# ==================================================
+# SAI SỐ THAM KHẢO CỦA TỪNG KỊCH BẢN
+#
+# Các giá trị được lấy từ kết quả đánh giá model.
+# Khoảng dự đoán tham khảo được tính:
+#
+# predicted_g3 ± RMSE
+#
+# Đây KHÔNG phải khoảng tin cậy 95%.
+# ==================================================
+SCENARIO_METRICS = {
+    "A_with_G1_G2": {
+        "mae": 1.359425,
+        "rmse": 1.886236,
+    },
+    "B_without_G1_G2": {
+        "mae": 1.132185,
+        "rmse": 1.900339,
+    },
+}
+
+
+router = APIRouter(
+    tags=["Prediction"],
+)
 
 
 def _save_prediction_history_safely(
@@ -90,10 +115,30 @@ def predict_student(
     payload: PredictRequest,
     db: Session = Depends(get_db),
 ) -> PredictResponse:
+    """
+    Dự đoán điểm G3 của học sinh bằng mô hình hồi quy.
 
-    features = payload.features.model_dump(exclude_none=True)
-    features = {**DEFAULT_FEATURES, **features}
+    Kết quả bao gồm:
+    - Điểm G3 dự đoán.
+    - MAE tham khảo.
+    - RMSE tham khảo.
+    - Khoảng dự đoán tham khảo dựa trên RMSE.
 
+    Hệ thống không phân loại Đạt hoặc Trượt.
+    """
+
+    # Chỉ lấy những trường người dùng thực sự nhập.
+    features = payload.features.model_dump(
+        exclude_none=True,
+    )
+
+    # Bổ sung giá trị mặc định cho các trường tùy chọn.
+    features = {
+        **DEFAULT_FEATURES,
+        **features,
+    }
+
+    # Chế độ có G1/G2 bắt buộc phải nhập đủ hai điểm.
     if payload.prediction_mode == "with_g1_g2":
         if features.get("G1") is None or features.get("G2") is None:
             raise HTTPException(
@@ -102,8 +147,78 @@ def predict_student(
             )
 
     try:
-        service = get_prediction_service(payload.prediction_mode)
-        result = service.predict(features=features)
+        # Lấy prediction service theo chế độ dự đoán.
+        service = get_prediction_service(
+            payload.prediction_mode
+        )
+
+        # Thực hiện dự đoán hồi quy.
+        result = service.predict(
+            features=features
+        )
+
+        predicted_g3 = float(
+            result["predicted_g3"]
+        )
+
+        scenario = str(
+            result["scenario"]
+        )
+
+        model_name = str(
+            result["model"]
+        )
+
+        # ==========================================
+        # LẤY SAI SỐ THAM KHẢO
+        # ==========================================
+        scenario_metrics = SCENARIO_METRICS.get(
+            scenario
+        )
+
+        if scenario_metrics is None:
+            raise ValueError(
+                f"Không tìm thấy metrics cho scenario: {scenario}"
+            )
+
+        mae = float(
+            scenario_metrics["mae"]
+        )
+
+        rmse = float(
+            scenario_metrics["rmse"]
+        )
+
+        # ==========================================
+        # TÍNH KHOẢNG DỰ ĐOÁN THAM KHẢO
+        #
+        # Giới hạn trong thang điểm 0 - 20.
+        # ==========================================
+        prediction_lower = max(
+            0.0,
+            predicted_g3 - rmse,
+        )
+
+        prediction_upper = min(
+            20.0,
+            predicted_g3 + rmse,
+        )
+
+        # ==========================================
+        # LƯU LỊCH SỬ VÀO SQL SERVER
+        # ==========================================
+        create_prediction_history(
+            db,
+            full_name=payload.student.full_name,
+            subject=features.get("subject"),
+            prediction_mode=payload.prediction_mode,
+            scenario=scenario,
+            predicted_g3=predicted_g3,
+            model_name=model_name,
+            model_version=None,
+            input_features=features,
+        )
+
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -120,19 +235,31 @@ def predict_student(
             detail=f"Could not run prediction: {exc}",
         ) from exc
 
-    history_saved, history_id = _save_prediction_history_safely(
-        db,
-        payload=payload,
-        features=features,
-        result=result,
-    )
-
+    # ==========================================
+    # TRẢ KẾT QUẢ HỒI QUY
+    # ==========================================
     return PredictResponse(
         full_name=payload.student.full_name,
-        predicted_g3=float(result["predicted_g3"]),
-        model=result["model"],
-        model_version=result["model_version"],
-        scenario=result["scenario"],
-        history_saved=history_saved,
-        history_id=history_id,
+        predicted_g3=round(
+            predicted_g3,
+            2,
+        ),
+        mae=round(
+            mae,
+            4,
+        ),
+        rmse=round(
+            rmse,
+            4,
+        ),
+        prediction_lower=round(
+            prediction_lower,
+            2,
+        ),
+        prediction_upper=round(
+            prediction_upper,
+            2,
+        ),
+        model=model_name,
+        scenario=scenario,
     )
