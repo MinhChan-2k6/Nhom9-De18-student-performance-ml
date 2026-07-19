@@ -245,13 +245,36 @@ class PredictResponse(BaseModel):
     """
     Kết quả dự đoán hồi quy.
 
-    Hệ thống chỉ trả về điểm G3 dự đoán,
-    không phân loại Đạt hoặc Trượt.
+    Hệ thống trả về:
+    - Điểm G3 dự đoán.
+    - MAE tham khảo của mô hình.
+    - RMSE tham khảo của mô hình.
+    - Khoảng dự đoán tham khảo dựa trên RMSE.
+
+    Không phân loại Đạt hoặc Trượt.
     """
 
     full_name: str
 
     predicted_g3: float = Field(
+        ge=0,
+        le=20,
+    )
+
+    mae: float = Field(
+        ge=0,
+    )
+
+    rmse: float = Field(
+        ge=0,
+    )
+
+    prediction_lower: float = Field(
+        ge=0,
+        le=20,
+    )
+
+    prediction_upper: float = Field(
         ge=0,
         le=20,
     )
@@ -290,3 +313,18 @@ class PredictionHistoryResponse(BaseModel):
     input_features: dict[str, Any] | None = None
 
     created_at: datetime
+
+
+class HealthResponse(BaseModel):
+    """
+    Trạng thái hoạt động của FastAPI và kết nối SQL Server.
+    """
+
+    status: Literal["ok"]
+
+    api: Literal["online"]
+
+    database: Literal[
+        "connected",
+        "disconnected",
+    ]

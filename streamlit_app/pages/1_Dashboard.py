@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import altair as alt
 import pandas as pd
 import requests
 import streamlit as st
@@ -414,10 +415,44 @@ with chart_col1:
                 .reset_index(name="Số lượng")
             )
 
-            st.bar_chart(
-                distribution,
-                x="Khoảng điểm",
-                y="Số lượng",
+            # Biểu đồ Altair để nhãn trục X nằm ngang
+            chart = (
+                alt.Chart(distribution)
+                .mark_bar()
+                .encode(
+                    x=alt.X(
+                        "Khoảng điểm:N",
+                        title="Khoảng điểm",
+                        sort=None,
+                        axis=alt.Axis(
+                            labelAngle=0,
+                            labelOverlap=False,
+                            labelPadding=8,
+                        ),
+                    ),
+                    y=alt.Y(
+                        "Số lượng:Q",
+                        title="Số lượng",
+                    ),
+                    tooltip=[
+                        alt.Tooltip(
+                            "Khoảng điểm:N",
+                            title="Khoảng điểm",
+                        ),
+                        alt.Tooltip(
+                            "Số lượng:Q",
+                            title="Số lượng",
+                        ),
+                    ],
+                )
+                .properties(
+                    height=300,
+                )
+            )
+
+            st.altair_chart(
+                chart,
+                use_container_width=True,
             )
 
 

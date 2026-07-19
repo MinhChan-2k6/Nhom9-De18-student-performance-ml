@@ -7,6 +7,9 @@ from api.schemas import PredictRequest, PredictResponse
 from src.inference.predictor import get_prediction_service
 
 
+# ==================================================
+# GIÁ TRỊ MẶC ĐỊNH CHO CÁC ĐẶC TRƯNG TÙY CHỌN
+# ==================================================
 DEFAULT_FEATURES = {
     "school": "gp",
     "address": "u",
@@ -36,7 +39,31 @@ DEFAULT_FEATURES = {
 }
 
 
-router = APIRouter(tags=["Prediction"])
+# ==================================================
+# SAI SỐ THAM KHẢO CỦA TỪNG KỊCH BẢN
+#
+# Các giá trị được lấy từ kết quả đánh giá model.
+# Khoảng dự đoán tham khảo được tính:
+#
+# predicted_g3 ± RMSE
+#
+# Đây KHÔNG phải khoảng tin cậy 95%.
+# ==================================================
+SCENARIO_METRICS = {
+    "A_with_G1_G2": {
+        "mae": 1.359425,
+        "rmse": 1.886236,
+    },
+    "B_without_G1_G2": {
+        "mae": 1.132185,
+        "rmse": 1.900339,
+    },
+}
+
+
+router = APIRouter(
+    tags=["Prediction"],
+)
 
 
 @router.post(
@@ -51,8 +78,13 @@ def predict_student(
     """
     Dự đoán điểm G3 của học sinh bằng mô hình hồi quy.
 
-    Hệ thống chỉ trả về điểm G3 dự đoán,
-    không phân loại Đạt hoặc Trượt.
+    Kết quả bao gồm:
+    - Điểm G3 dự đoán.
+    - MAE tham khảo.
+    - RMSE tham khảo.
+    - Khoảng dự đoán tham khảo dựa trên RMSE.
+
+    Hệ thống không phân loại Đạt hoặc Trượt.
     """
 
     # Chỉ lấy những trường người dùng thực sự nhập.
@@ -60,14 +92,13 @@ def predict_student(
         exclude_none=True,
     )
 
-    # Bổ sung giá trị mặc định cho các trường tùy chọn
-    # mà người dùng không cung cấp.
+    # Bổ sung giá trị mặc định cho các trường tùy chọn.
     features = {
         **DEFAULT_FEATURES,
         **features,
     }
 
-    # Chế độ sử dụng G1 và G2 bắt buộc phải có đủ hai điểm.
+    # Chế độ có G1/G2 bắt buộc phải nhập đủ hai điểm.
     if payload.prediction_mode == "with_g1_g2":
         if (
             features.get("G1") is None
@@ -82,7 +113,7 @@ def predict_student(
             )
 
     try:
-        # Lấy prediction service tương ứng với chế độ dự đoán.
+        # Lấy prediction service theo chế độ dự đoán.
         service = get_prediction_service(
             payload.prediction_mode
         )
@@ -92,15 +123,64 @@ def predict_student(
             features=features
         )
 
-        # Lưu kết quả dự đoán vào SQL Server.
+        predicted_g3 = float(
+            result["predicted_g3"]
+        )
+
+        scenario = str(
+            result["scenario"]
+        )
+
+        model_name = str(
+            result["model"]
+        )
+
+        # ==========================================
+        # LẤY SAI SỐ THAM KHẢO
+        # ==========================================
+        scenario_metrics = SCENARIO_METRICS.get(
+            scenario
+        )
+
+        if scenario_metrics is None:
+            raise ValueError(
+                f"Không tìm thấy metrics cho scenario: {scenario}"
+            )
+
+        mae = float(
+            scenario_metrics["mae"]
+        )
+
+        rmse = float(
+            scenario_metrics["rmse"]
+        )
+
+        # ==========================================
+        # TÍNH KHOẢNG DỰ ĐOÁN THAM KHẢO
+        #
+        # Giới hạn trong thang điểm 0 - 20.
+        # ==========================================
+        prediction_lower = max(
+            0.0,
+            predicted_g3 - rmse,
+        )
+
+        prediction_upper = min(
+            20.0,
+            predicted_g3 + rmse,
+        )
+
+        # ==========================================
+        # LƯU LỊCH SỬ VÀO SQL SERVER
+        # ==========================================
         create_prediction_history(
             db,
             full_name=payload.student.full_name,
             subject=features.get("subject"),
             prediction_mode=payload.prediction_mode,
-            scenario=result["scenario"],
-            predicted_g3=result["predicted_g3"],
-            model_name=result["model"],
+            scenario=scenario,
+            predicted_g3=predicted_g3,
+            model_name=model_name,
             model_version=None,
             input_features=features,
         )
@@ -126,10 +206,31 @@ def predict_student(
             ),
         ) from exc
 
-    # Chỉ trả kết quả hồi quy.
+    # ==========================================
+    # TRẢ KẾT QUẢ HỒI QUY
+    # ==========================================
     return PredictResponse(
         full_name=payload.student.full_name,
-        predicted_g3=float(result["predicted_g3"]),
-        model=result["model"],
-        scenario=result["scenario"],
+        predicted_g3=round(
+            predicted_g3,
+            2,
+        ),
+        mae=round(
+            mae,
+            4,
+        ),
+        rmse=round(
+            rmse,
+            4,
+        ),
+        prediction_lower=round(
+            prediction_lower,
+            2,
+        ),
+        prediction_upper=round(
+            prediction_upper,
+            2,
+        ),
+        model=model_name,
+        scenario=scenario,
     )

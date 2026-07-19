@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+from textwrap import dedent
 from typing import Any
 
 import pandas as pd
@@ -13,6 +14,9 @@ from streamlit_app.components.styles import load_css
 API_BASE_URL = "http://127.0.0.1:8000"
 
 
+# ==================================================
+# CẤU HÌNH TRANG
+# ==================================================
 st.set_page_config(
     page_title="Thông tin mô hình",
     page_icon="🧠",
@@ -21,15 +25,50 @@ st.set_page_config(
 
 load_css()
 
-st.markdown(
+
+# ==================================================
+# HÀM RENDER HTML
+# Tránh Streamlit hiểu HTML thụt dòng thành code block
+# ==================================================
+def render_html(content: str) -> None:
+    """
+    Render HTML trong Streamlit mà không bị Markdown
+    hiểu nhầm các dòng thụt lề thành code block.
+    """
+
+    cleaned_html = "".join(
+        line.strip()
+        for line in dedent(content).splitlines()
+        if line.strip()
+    )
+
+    st.markdown(
+        cleaned_html,
+        unsafe_allow_html=True,
+    )
+
+
+# ==================================================
+# CSS RIÊNG CHO MODEL INFO
+# ==================================================
+render_html(
     """
     <style>
     .model-hero {
         padding: 1.6rem 1.8rem;
         border-radius: 22px;
         background:
-            radial-gradient(circle at top right, rgba(255,255,255,.22), transparent 34%),
-            linear-gradient(135deg, #155EEF 0%, #5B4BDB 58%, #7A5AF8 100%);
+            radial-gradient(
+                circle at top right,
+                rgba(255,255,255,.22),
+                transparent 34%
+            ),
+            linear-gradient(
+                135deg,
+                #155EEF 0%,
+                #5B4BDB 58%,
+                #7A5AF8 100%
+            );
         color: white;
         box-shadow: 0 14px 34px rgba(21, 94, 239, .18);
         margin-bottom: 1.4rem;
@@ -52,7 +91,11 @@ st.markdown(
         padding: 1.1rem 1.25rem;
         border-radius: 18px;
         border: 1px solid rgba(21, 94, 239, .14);
-        background: linear-gradient(135deg, rgba(21,94,239,.08), rgba(122,90,248,.05));
+        background: linear-gradient(
+            135deg,
+            rgba(21,94,239,.08),
+            rgba(122,90,248,.05)
+        );
         margin: .35rem 0 1rem;
     }
 
@@ -123,7 +166,7 @@ st.markdown(
     .metric-box .metric-value {
         color: #155EEF;
         font-size: 1.8rem;
-        font-weight: 850;
+        font-weight: 800;
         margin-top: .2rem;
     }
 
@@ -180,58 +223,158 @@ st.markdown(
         overflow: hidden;
     }
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+# ==================================================
+# GỌI API MODEL INFO
+# ==================================================
+@st.cache_data(
+    ttl=60,
+    show_spinner=False,
+)
 def load_model_info() -> list[dict[str, Any]]:
     response = requests.get(
         f"{API_BASE_URL}/model-info",
         timeout=15,
     )
+
     response.raise_for_status()
 
     payload = response.json()
+
     if not isinstance(payload, list):
-        raise ValueError("API /model-info phải trả về một danh sách.")
+        raise ValueError(
+            "API /model-info phải trả về một danh sách."
+        )
 
     return payload
 
 
-def format_model_name(value: Any) -> str:
+# ==================================================
+# FORMAT TÊN MODEL
+# ==================================================
+def format_model_name(
+    value: Any,
+) -> str:
     if not value:
         return "Không xác định"
 
     labels = {
-        "random_forest": "Random Forest",
-        "random_forest_grid_search": "Random Forest — Grid Search",
-        "gradient_boosting": "Gradient Boosting",
-        "linear_regression": "Linear Regression",
+        "random_forest":
+            "Random Forest",
+        "random_forest_grid_search":
+            "Random Forest — Grid Search",
+        "gradient_boosting":
+            "Gradient Boosting",
+        "linear_regression":
+            "Linear Regression",
     }
+
     raw = str(value)
-    return labels.get(raw, raw.replace("_", " ").title())
+
+    return labels.get(
+        raw,
+        raw.replace(
+            "_",
+            " ",
+        ).title(),
+    )
 
 
-def format_scenario(value: Any) -> str:
+# ==================================================
+# FORMAT SCENARIO
+# ==================================================
+def format_scenario(
+    value: Any,
+) -> str:
     labels = {
-        "A_with_G1_G2": "Có điểm G1 và G2",
-        "B_without_G1_G2": "Dự báo sớm — không dùng G1, G2",
+        "A_with_G1_G2":
+            "Có điểm G1 và G2",
+        "B_without_G1_G2":
+            "Dự báo sớm — không dùng G1, G2",
     }
-    raw = str(value or "")
-    return labels.get(raw, raw or "Không xác định")
+
+    raw = str(
+        value or ""
+    )
+
+    return labels.get(
+        raw,
+        raw or "Không xác định",
+    )
 
 
-def format_mode(value: Any) -> str:
+def format_scenario_short(
+    value: Any,
+) -> str:
     labels = {
-        "with_g1_g2": "Có G1 và G2",
-        "early_prediction": "Dự báo sớm",
+        "A_with_G1_G2":
+            "Kịch bản A",
+        "B_without_G1_G2":
+            "Kịch bản B",
     }
-    raw = str(value or "")
-    return labels.get(raw, raw or "Không xác định")
+
+    raw = str(
+        value or ""
+    )
+
+    return labels.get(
+        raw,
+        raw or "Không xác định",
+    )
 
 
+# ==================================================
+# FORMAT FEATURE SET
+# ==================================================
+def format_feature_set(
+    scenario: Any,
+) -> str:
+    labels = {
+        "A_with_G1_G2":
+            "Có G1, G2",
+        "B_without_G1_G2":
+            "Không có G1, G2",
+    }
+
+    raw = str(
+        scenario or ""
+    )
+
+    return labels.get(
+        raw,
+        "Không xác định",
+    )
+
+
+# ==================================================
+# FORMAT MODE
+# ==================================================
+def format_mode(
+    value: Any,
+) -> str:
+    labels = {
+        "with_g1_g2":
+            "Có G1 và G2",
+        "early_prediction":
+            "Dự báo sớm",
+    }
+
+    raw = str(
+        value or ""
+    )
+
+    return labels.get(
+        raw,
+        raw or "Không xác định",
+    )
+
+
+# ==================================================
+# LẤY METRIC
+# ==================================================
 def get_best_metric(
     metrics: dict[str, Any],
     key: str,
@@ -239,104 +382,328 @@ def get_best_metric(
     model_name: Any = None,
     scenario: Any = None,
 ) -> float | None:
-    for container_name in ("test_metrics", "best_metrics", "metrics"):
-        container = metrics.get(container_name)
-        if isinstance(container, dict) and container.get(key) is not None:
+
+    for container_name in (
+        "test_metrics",
+        "best_metrics",
+        "metrics",
+    ):
+        container = metrics.get(
+            container_name
+        )
+
+        if (
+            isinstance(
+                container,
+                dict,
+            )
+            and container.get(key)
+            is not None
+        ):
             try:
-                return float(container[key])
-            except (TypeError, ValueError):
+                return float(
+                    container[key]
+                )
+
+            except (
+                TypeError,
+                ValueError,
+            ):
                 pass
 
     if metrics.get(key) is not None:
         try:
-            return float(metrics[key])
-        except (TypeError, ValueError):
+            return float(
+                metrics[key]
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
             pass
 
-    rows = metrics.get("validation_results", [])
-    if isinstance(rows, list):
+    rows = metrics.get(
+        "validation_results",
+        [],
+    )
+
+    if isinstance(
+        rows,
+        list,
+    ):
         preferred_rows = [
             row
             for row in rows
-            if isinstance(row, dict)
-            and (not model_name or row.get("model") == model_name)
-            and (not scenario or row.get("scenario") == scenario)
+            if isinstance(
+                row,
+                dict,
+            )
+            and (
+                not model_name
+                or row.get("model")
+                == model_name
+            )
+            and (
+                not scenario
+                or row.get("scenario")
+                == scenario
+            )
         ]
 
-        for row in preferred_rows or rows:
-            if isinstance(row, dict) and row.get(key) is not None:
+        for row in (
+            preferred_rows
+            or rows
+        ):
+            if (
+                isinstance(
+                    row,
+                    dict,
+                )
+                and row.get(key)
+                is not None
+            ):
                 try:
-                    return float(row[key])
-                except (TypeError, ValueError):
+                    return float(
+                        row[key]
+                    )
+
+                except (
+                    TypeError,
+                    ValueError,
+                ):
                     continue
 
     return None
 
 
-def metric_html(name: str, value: float | None, help_text: str) -> str:
-    rendered = f"{value:.4f}" if value is not None else "--"
-    return f"""
-    <div class="metric-box">
-        <div class="metric-name">{html.escape(name)}</div>
-        <div class="metric-value">{rendered}</div>
-        <div class="metric-help">{html.escape(help_text)}</div>
-    </div>
-    """
+# ==================================================
+# HTML CHỈ SỐ
+# ==================================================
+def metric_html(
+    name: str,
+    value: float | None,
+    help_text: str,
+) -> str:
+
+    rendered = (
+        f"{value:.4f}"
+        if value is not None
+        else "--"
+    )
+
+    return dedent(
+        f"""
+        <div class="metric-box">
+            <div class="metric-name">
+                {html.escape(name)}
+            </div>
+            <div class="metric-value">
+                {rendered}
+            </div>
+            <div class="metric-help">
+                {html.escape(help_text)}
+            </div>
+        </div>
+        """
+    ).strip()
 
 
-def comparison_frame(metrics: dict[str, Any]) -> pd.DataFrame:
-    rows = metrics.get("validation_results", [])
-    if not isinstance(rows, list) or not rows:
+# ==================================================
+# BẢNG SO SÁNH TỪ MỘT METRICS
+# ==================================================
+def comparison_frame(
+    metrics: dict[str, Any],
+) -> pd.DataFrame:
+
+    rows = metrics.get(
+        "validation_results",
+        [],
+    )
+
+    if (
+        not isinstance(
+            rows,
+            list,
+        )
+        or not rows
+    ):
         return pd.DataFrame()
 
-    frame = pd.DataFrame(rows)
+    frame = pd.DataFrame(
+        rows
+    )
+
+    if "scenario" in frame.columns:
+        frame[
+            "feature_set"
+        ] = frame[
+            "scenario"
+        ].map(
+            {
+                "A_with_G1_G2":
+                    "Có G1, G2",
+                "B_without_G1_G2":
+                    "Không có G1, G2",
+            }
+        ).fillna(
+            "Không xác định"
+        )
+
     wanted = [
         column
-        for column in ("scenario", "model", "mae", "rmse", "r2")
-        if column in frame.columns
+        for column in (
+            "scenario",
+            "feature_set",
+            "model",
+            "mae",
+            "rmse",
+            "r2",
+        )
+        if column
+        in frame.columns
     ]
-    frame = frame[wanted].copy()
 
-    rename_map = {
-        "scenario": "Kịch bản",
-        "model": "Mô hình",
-        "mae": "MAE",
-        "rmse": "RMSE",
-        "r2": "R²",
-    }
-    frame = frame.rename(columns=rename_map)
+    frame = frame[
+        wanted
+    ].copy()
 
-    if "Kịch bản" in frame:
-        frame["Kịch bản"] = frame["Kịch bản"].map(format_scenario)
-    if "Mô hình" in frame:
-        frame["Mô hình"] = frame["Mô hình"].map(format_model_name)
+    frame = frame.rename(
+        columns={
+            "scenario":
+                "Kịch bản",
+            "feature_set":
+                "Feature set",
+            "model":
+                "Mô hình",
+            "mae":
+                "MAE",
+            "rmse":
+                "RMSE",
+            "r2":
+                "R²",
+        }
+    )
 
-    for column in ("MAE", "RMSE", "R²"):
-        if column in frame:
-            frame[column] = pd.to_numeric(
+    if (
+        "Kịch bản"
+        in frame.columns
+    ):
+        frame[
+            "Kịch bản"
+        ] = frame[
+            "Kịch bản"
+        ].map(
+            format_scenario_short
+        )
+
+    if (
+        "Mô hình"
+        in frame.columns
+    ):
+        frame[
+            "Mô hình"
+        ] = frame[
+            "Mô hình"
+        ].map(
+            format_model_name
+        )
+
+    for column in (
+        "MAE",
+        "RMSE",
+        "R²",
+    ):
+        if (
+            column
+            in frame.columns
+        ):
+            frame[
+                column
+            ] = pd.to_numeric(
                 frame[column],
                 errors="coerce",
-            ).round(4)
+            ).round(
+                4
+            )
 
     return frame
 
 
-st.markdown(
+# ==================================================
+# BẢNG SO SÁNH TỔNG HỢP 2 KỊCH BẢN
+# ==================================================
+def build_global_comparison(
+    model_items: list[dict[str, Any]],
+) -> pd.DataFrame:
+
+    frames = []
+
+    for item in model_items:
+        metrics = item.get(
+            "metrics",
+            {},
+        )
+
+        if not isinstance(
+            metrics,
+            dict,
+        ):
+            continue
+
+        current_frame = (
+            comparison_frame(
+                metrics
+            )
+        )
+
+        if not current_frame.empty:
+            frames.append(
+                current_frame
+            )
+
+    if not frames:
+        return pd.DataFrame()
+
+    combined = pd.concat(
+        frames,
+        ignore_index=True,
+    )
+
+    combined = combined.drop_duplicates()
+
+    return combined
+
+
+# ==================================================
+# HEADER
+# ==================================================
+render_html(
     """
     <div class="model-hero">
         <h1>🧠 Trung tâm mô hình</h1>
         <p>
-            Theo dõi hai kịch bản dự đoán G3, mô hình được chọn,
-            hiệu năng đánh giá và toàn bộ đặc trưng đầu vào.
+            Theo dõi hai kịch bản dự đoán G3,
+            mô hình được chọn,
+            hiệu năng đánh giá
+            và toàn bộ đặc trưng đầu vào.
         </p>
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
-toolbar_col1, toolbar_col2 = st.columns([1, 4])
+
+# ==================================================
+# THANH CÔNG CỤ
+# ==================================================
+toolbar_col1, toolbar_col2 = (
+    st.columns(
+        [1, 4]
+    )
+)
 
 with toolbar_col1:
+
     if st.button(
         "🔄 Làm mới",
         use_container_width=True,
@@ -344,132 +711,346 @@ with toolbar_col1:
         load_model_info.clear()
         st.rerun()
 
+
 with toolbar_col2:
-    st.markdown(
-        '<span class="status-ready">● API model-info đang hoạt động</span>',
-        unsafe_allow_html=True,
+
+    render_html(
+        """
+        <span class="status-ready">
+            ● API model-info đang hoạt động
+        </span>
+        """
     )
 
 
+# ==================================================
+# LOAD DATA
+# ==================================================
 try:
-    model_items = load_model_info()
 
-except requests.exceptions.ConnectionError:
+    model_items = (
+        load_model_info()
+    )
+
+
+except (
+    requests.exceptions.ConnectionError
+):
+
     st.error(
-        "Không kết nối được FastAPI. Hãy chạy API tại "
+        "Không kết nối được FastAPI. "
+        "Hãy chạy API tại "
         "http://127.0.0.1:8000."
     )
+
     st.stop()
 
-except requests.exceptions.Timeout:
-    st.error("FastAPI phản hồi quá lâu.")
+
+except (
+    requests.exceptions.Timeout
+):
+
+    st.error(
+        "FastAPI phản hồi quá lâu."
+    )
+
     st.stop()
 
-except requests.exceptions.HTTPError as exc:
-    st.error(f"FastAPI trả về lỗi: {exc}")
+
+except (
+    requests.exceptions.HTTPError
+) as exc:
+
+    st.error(
+        f"FastAPI trả về lỗi: {exc}"
+    )
+
     st.stop()
+
 
 except Exception as exc:
-    st.error(f"Không thể tải thông tin mô hình: {exc}")
+
+    st.error(
+        "Không thể tải thông tin mô hình: "
+        f"{exc}"
+    )
+
     st.stop()
 
 
 if not model_items:
-    st.warning("API chưa trả về thông tin mô hình.")
+
+    st.warning(
+        "API chưa trả về thông tin mô hình."
+    )
+
     st.stop()
 
 
+# ==================================================
+# SO SÁNH TỔNG HỢP
+# ==================================================
+global_comparison = (
+    build_global_comparison(
+        model_items
+    )
+)
+
+
+if not global_comparison.empty:
+
+    render_html(
+        """
+        <div class="section-heading">
+            <h3>📊 So sánh các mô hình</h3>
+            <p>
+                Đối chiếu kịch bản,
+                Feature set và các chỉ số
+                đánh giá mô hình hồi quy.
+            </p>
+        </div>
+        """
+    )
+
+    st.dataframe(
+        global_comparison,
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
+# ==================================================
+# TẠO TAB 2 KỊCH BẢN
+# ==================================================
 tab_labels = [
     (
         "🎓 Có G1, G2"
-        if item.get("prediction_mode") == "with_g1_g2"
+        if item.get(
+            "prediction_mode"
+        )
+        == "with_g1_g2"
         else "🔎 Dự báo sớm"
     )
-    for item in model_items
+    for item
+    in model_items
 ]
 
-tabs = st.tabs(tab_labels)
+
+tabs = st.tabs(
+    tab_labels
+)
 
 
-for tab, item in zip(tabs, model_items):
+# ==================================================
+# HIỂN THỊ CHI TIẾT TỪNG KỊCH BẢN
+# ==================================================
+for (
+    tab,
+    item,
+) in zip(
+    tabs,
+    model_items,
+):
+
     with tab:
-        prediction_mode = item.get("prediction_mode")
-        scenario = item.get("scenario")
-        best_model = item.get("best_model")
-        input_features = item.get("input_features", [])
-        metrics = item.get("metrics", {})
 
-        if not isinstance(input_features, list):
+        prediction_mode = (
+            item.get(
+                "prediction_mode"
+            )
+        )
+
+        scenario = (
+            item.get(
+                "scenario"
+            )
+        )
+
+        best_model = (
+            item.get(
+                "best_model"
+            )
+        )
+
+        input_features = (
+            item.get(
+                "input_features",
+                [],
+            )
+        )
+
+        metrics = (
+            item.get(
+                "metrics",
+                {},
+            )
+        )
+
+
+        if not isinstance(
+            input_features,
+            list,
+        ):
             input_features = []
-        if not isinstance(metrics, dict):
+
+
+        if not isinstance(
+            metrics,
+            dict,
+        ):
             metrics = {}
 
-        description = (
-            "Kịch bản sử dụng điểm G1 và G2, phù hợp khi đã có kết quả "
-            "của hai giai đoạn học trước."
-            if prediction_mode == "with_g1_g2"
-            else
-            "Kịch bản hỗ trợ phát hiện sớm, không cần điểm G1 và G2."
-        )
 
-        st.markdown(
+        # ==========================================
+        # MÔ TẢ KỊCH BẢN
+        # ==========================================
+        if (
+            prediction_mode
+            == "with_g1_g2"
+        ):
+            description = (
+                "Kịch bản sử dụng điểm G1 và G2, "
+                "phù hợp khi đã có kết quả "
+                "của hai giai đoạn học trước."
+            )
+
+        else:
+            description = (
+                "Kịch bản hỗ trợ dự báo sớm, "
+                "không cần điểm G1 và G2."
+            )
+
+
+        render_html(
             f"""
             <div class="scenario-banner">
-                <div class="eyebrow">{html.escape(format_mode(prediction_mode))}</div>
-                <h3>{html.escape(format_scenario(scenario))}</h3>
-                <p>{html.escape(description)}</p>
+                <div class="eyebrow">
+                    {html.escape(
+                        format_mode(
+                            prediction_mode
+                        )
+                    )}
+                </div>
+
+                <h3>
+                    {html.escape(
+                        format_scenario(
+                            scenario
+                        )
+                    )}
+                </h3>
+
+                <p>
+                    {html.escape(
+                        description
+                    )}
+                </p>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-        info_col1, info_col2, info_col3 = st.columns(3)
+
+        # ==========================================
+        # THẺ THÔNG TIN
+        # ==========================================
+        (
+            info_col1,
+            info_col2,
+            info_col3,
+        ) = st.columns(
+            3
+        )
+
 
         with info_col1:
-            st.markdown(
+
+            render_html(
                 f"""
                 <div class="info-card">
-                    <div class="label">Mô hình tốt nhất</div>
-                    <div class="value">{html.escape(format_model_name(best_model))}</div>
-                    <div class="note">Được chọn theo kết quả đánh giá của nhóm</div>
+                    <div class="label">
+                        Mô hình tốt nhất
+                    </div>
+
+                    <div class="value">
+                        {html.escape(
+                            format_model_name(
+                                best_model
+                            )
+                        )}
+                    </div>
+
+                    <div class="note">
+                        Được chọn theo kết quả 
+                          đánh giá của nhóm
+                    </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
+
 
         with info_col2:
-            st.markdown(
+
+            render_html(
                 f"""
                 <div class="info-card">
-                    <div class="label">Số đặc trưng đầu vào</div>
-                    <div class="value">{len(input_features)}</div>
-                    <div class="note">Các cột model sử dụng khi suy luận</div>
+                    <div class="label">
+                        Số đặc trưng đầu vào
+                    </div>
+
+                    <div class="value">
+                        {len(input_features)}
+                    </div>
+
+                    <div class="note">
+                        Các cột model sử dụng
+                        khi suy luận
+                    </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
+
 
         with info_col3:
-            st.markdown(
+
+            render_html(
                 f"""
                 <div class="info-card">
-                    <div class="label">Trạng thái</div>
-                    <div class="value">Sẵn sàng</div>
-                    <div class="note">Artifact và metrics đã được tải</div>
+                    <div class="label">
+                        Feature set
+                    </div>
+
+                    <div class="value">
+                        {html.escape(
+                            format_feature_set(
+                                scenario
+                            )
+                        )}
+                    </div>
+
+                    <div class="note">
+                        Nhóm đặc trưng được sử dụng
+                        trong kịch bản này
+                    </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
 
-        st.markdown(
+
+        # ==========================================
+        # CHỈ SỐ ĐÁNH GIÁ
+        # ==========================================
+        render_html(
             """
             <div class="section-heading">
                 <h3>🎯 Chỉ số đánh giá</h3>
-                <p>MAE và RMSE càng thấp càng tốt; R² càng gần 1 càng tốt.</p>
+                <p>
+                    MAE và RMSE càng thấp càng tốt;
+                    R² càng gần 1 càng tốt.
+                </p>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
+
 
         mae = get_best_metric(
             metrics,
@@ -477,12 +1058,16 @@ for tab, item in zip(tabs, model_items):
             model_name=best_model,
             scenario=scenario,
         )
+
+
         rmse = get_best_metric(
             metrics,
             "rmse",
             model_name=best_model,
             scenario=scenario,
         )
+
+
         r2 = get_best_metric(
             metrics,
             "r2",
@@ -490,97 +1075,185 @@ for tab, item in zip(tabs, model_items):
             scenario=scenario,
         )
 
-        metric_col1, metric_col2, metric_col3 = st.columns(3)
+
+        (
+            metric_col1,
+            metric_col2,
+            metric_col3,
+        ) = st.columns(
+            3
+        )
+
 
         with metric_col1:
-            st.markdown(
-                metric_html("MAE", mae, "Sai số tuyệt đối trung bình"),
-                unsafe_allow_html=True,
+
+            render_html(
+                metric_html(
+                    "MAE",
+                    mae,
+                    "Sai số tuyệt đối trung bình",
+                )
             )
+
 
         with metric_col2:
-            st.markdown(
-                metric_html("RMSE", rmse, "Nhạy hơn với sai số lớn"),
-                unsafe_allow_html=True,
+
+            render_html(
+                metric_html(
+                    "RMSE",
+                    rmse,
+                    "Nhạy hơn với sai số lớn",
+                )
             )
+
 
         with metric_col3:
-            st.markdown(
-                metric_html("R²", r2, "Mức độ giải thích biến thiên"),
-                unsafe_allow_html=True,
+
+            render_html(
+                metric_html(
+                    "R²",
+                    r2,
+                    "Mức độ giải thích biến thiên",
+                )
             )
 
-        comparison = comparison_frame(metrics)
 
-        if not comparison.empty:
-            st.markdown(
-                """
-                <div class="section-heading">
-                    <h3>📊 So sánh các mô hình</h3>
-                    <p>Đối chiếu kết quả validation trước khi chọn model tốt nhất.</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            st.dataframe(
-                comparison,
-                use_container_width=True,
-                hide_index=True,
-            )
-
-        st.markdown(
+        # ==========================================
+        # ĐẶC TRƯNG ĐẦU VÀO
+        # ==========================================
+        render_html(
             """
             <div class="section-heading">
                 <h3>🧩 Đặc trưng đầu vào</h3>
-                <p>Các trường được truyền vào pipeline khi thực hiện dự đoán.</p>
+                <p>
+                    Các trường được truyền vào pipeline
+                    khi thực hiện dự đoán.
+                </p>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-        if input_features:
-            preview_features = input_features[:12]
-            chips = "".join(
-                f'<span class="feature-chip">{html.escape(str(feature))}</span>'
-                for feature in preview_features
-            )
-            st.markdown(chips, unsafe_allow_html=True)
 
-            remaining = len(input_features) - len(preview_features)
-            if remaining > 0:
-                st.caption(
-                    f"Đang hiển thị 12 đặc trưng đầu tiên; còn {remaining} đặc trưng."
+        if input_features:
+
+            preview_features = (
+                input_features[
+                    :12
+                ]
+            )
+
+
+            chips = "".join(
+                (
+                    '<span class="feature-chip">'
+                    f'{html.escape(str(feature))}'
+                    '</span>'
                 )
+                for feature
+                in preview_features
+            )
+
+
+            st.markdown(
+                chips,
+                unsafe_allow_html=True,
+            )
+
+
+            remaining = (
+                len(
+                    input_features
+                )
+                - len(
+                    preview_features
+                )
+            )
+
+
+            if remaining > 0:
+
+                st.caption(
+                    "Đang hiển thị 12 đặc trưng "
+                    f"đầu tiên; còn {remaining} đặc trưng."
+                )
+
 
             with st.expander(
-                f"Xem toàn bộ {len(input_features)} đặc trưng",
+                (
+                    "Xem toàn bộ "
+                    f"{len(input_features)} đặc trưng"
+                ),
                 expanded=False,
             ):
-                feature_frame = pd.DataFrame(
-                    {
-                        "STT": range(1, len(input_features) + 1),
-                        "Tên đặc trưng": input_features,
-                    }
+
+                feature_frame = (
+                    pd.DataFrame(
+                        {
+                            "STT":
+                                range(
+                                    1,
+                                    len(
+                                        input_features
+                                    )
+                                    + 1,
+                                ),
+                            "Tên đặc trưng":
+                                input_features,
+                        }
+                    )
                 )
+
+
                 st.dataframe(
                     feature_frame,
                     use_container_width=True,
                     hide_index=True,
                 )
+
+
         else:
-            st.info("Chưa có danh sách đặc trưng đầu vào.")
 
-        tuning = metrics.get("tuning")
+            st.info(
+                "Chưa có danh sách đặc trưng đầu vào."
+            )
+
+
+        # ==========================================
+        # TUNING
+        # ==========================================
+        tuning = metrics.get(
+            "tuning"
+        )
+
+
         if tuning:
-            with st.expander("⚙️ Chi tiết tinh chỉnh siêu tham số"):
-                st.json(tuning)
 
-        with st.expander("🛠 Dữ liệu metrics dành cho nhóm phát triển"):
-            st.json(metrics)
+            with st.expander(
+                "⚙️ Chi tiết tinh chỉnh siêu tham số"
+            ):
+
+                st.json(
+                    tuning
+                )
 
 
+        # ==========================================
+        # RAW METRICS
+        # ==========================================
+        with st.expander(
+            "🛠 Dữ liệu metrics dành cho nhóm phát triển"
+        ):
+
+            st.json(
+                metrics
+            )
+
+
+# ==================================================
+# FOOTER
+# ==================================================
 st.caption(
     "Thông tin được lấy trực tiếp từ FastAPI /model-info. "
-    "Trang không tự đọc artifact, giúp giao diện tách biệt với tầng mô hình."
+    "Trang không tự đọc artifact, "
+    "giúp giao diện tách biệt với tầng mô hình."
 )
