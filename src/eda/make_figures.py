@@ -142,31 +142,31 @@ def plot_g3_distribution(df: pd.DataFrame, output_dir: Path) -> Path:
         shrink=0.8,
         ax=ax,
     )
-    ax.set_title("Final grade G3 distribution by subject")
-    ax.set_xlabel("G3 final grade")
-    ax.set_ylabel("Number of students")
+    ax.set_title("Phân bố điểm cuối kỳ G3 theo môn học")
+    ax.set_xlabel("Điểm cuối kỳ G3")
+    ax.set_ylabel("Số lượng học sinh")
     return save_figure(fig, output_dir / "eda_g3_distribution.png")
 
 
 def plot_g3_by_subject(df: pd.DataFrame, output_dir: Path) -> Path:
     fig, ax = plt.subplots(figsize=(7, 5))
     sns.boxplot(data=df, x="subject", y="G3", ax=ax)
-    ax.set_title("G3 distribution by subject")
-    ax.set_xlabel("Subject")
-    ax.set_ylabel("G3 final grade")
+    ax.set_title("Phân bố điểm G3 theo môn học")
+    ax.set_xlabel("Môn học")
+    ax.set_ylabel("Điểm cuối kỳ G3")
     return save_figure(fig, output_dir / "eda_g3_by_subject.png")
 
 
 def plot_previous_grades_vs_g3(df: pd.DataFrame, output_dir: Path) -> Path:
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
     sns.scatterplot(data=df, x="G1", y="G3", hue="subject", alpha=0.65, ax=axes[0])
-    axes[0].set_title("Relationship between G1 and G3")
+    axes[0].set_title("Mối quan hệ giữa điểm G1 và G3")
     sns.scatterplot(data=df, x="G2", y="G3", hue="subject", alpha=0.65, ax=axes[1])
-    axes[1].set_title("Relationship between G2 and G3")
+    axes[1].set_title("Mối quan hệ giữa điểm G2 và G3")
 
     for ax in axes:
-        ax.set_xlabel("Previous period grade")
-        ax.set_ylabel("G3 final grade")
+        ax.set_xlabel("Điểm kỳ trước")
+        ax.set_ylabel("Điểm cuối kỳ G3")
 
     return save_figure(fig, output_dir / "eda_previous_grades_vs_g3.png")
 
@@ -175,7 +175,7 @@ def plot_numeric_correlation(df: pd.DataFrame, output_dir: Path) -> Path:
     corr = df.select_dtypes(include="number").corr()
     fig, ax = plt.subplots(figsize=(12, 9))
     sns.heatmap(corr, cmap="coolwarm", center=0, ax=ax)
-    ax.set_title("Correlation matrix for numeric variables")
+    ax.set_title("Ma trận tương quan giữa các biến số")
     return save_figure(fig, output_dir / "eda_numeric_correlation.png")
 
 
@@ -188,9 +188,9 @@ def plot_absences_vs_g3(df: pd.DataFrame, output_dir: Path) -> Path:
 
     fig, ax = plt.subplots(figsize=(8, 5))
     sns.boxplot(data=plot_df, x="absence_group", y="G3", ax=ax)
-    ax.set_title("G3 by absence group")
-    ax.set_xlabel("Number of absences")
-    ax.set_ylabel("G3 final grade")
+    ax.set_title("Điểm G3 theo nhóm số buổi vắng")
+    ax.set_xlabel("Số buổi vắng")
+    ax.set_ylabel("Điểm cuối kỳ G3")
     return save_figure(fig, output_dir / "eda_absences_vs_g3.png")
 
 
