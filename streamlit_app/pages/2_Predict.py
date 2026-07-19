@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import requests
 import streamlit as st
-
-from streamlit_app.components.styles import load_css
+from streamlit_app.components.styles import (
+    apply_dark_mode,
+    load_css,
+)
+apply_dark_mode()
 from streamlit_app.config import API_BASE_URL
 
 
