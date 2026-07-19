@@ -6,7 +6,6 @@ from streamlit_app.components.styles import (
     apply_dark_mode,
     load_css,
 )
-apply_dark_mode()
 from streamlit_app.config import API_BASE_URL
 
 
@@ -20,6 +19,7 @@ st.set_page_config(
 )
 
 load_css()
+apply_dark_mode()
 
 API_URL = f"{API_BASE_URL}/predict"
 
@@ -1373,7 +1373,7 @@ if submitted:
 
 
                     # ==================================
-                    # ĐIỂM G3 DỰ ĐOÁN
+                    # KẾT QUẢ DỰ ĐOÁN + SAI SỐ
                     # ==================================
                     st.markdown(
                         f"""
@@ -1387,11 +1387,11 @@ if submitted:
                             </p>
 
                             <div class="prediction-result-score">
-                                {predicted_g3:.2f} / 20
+                                {predicted_g3:.2f} ± {rmse:.2f}
                             </div>
 
                             <span class="prediction-result-status">
-                                Hồi quy
+                                Thang điểm 0 – 20
                             </span>
                         </div>
                         """,
@@ -1400,24 +1400,27 @@ if submitted:
 
 
                     # ==================================
-                    # KHOẢNG DỰ ĐOÁN THAM KHẢO
+                    # KHOẢNG SAI SỐ THAM KHẢO
                     # ==================================
                     st.markdown(
-                        "#### 📏 Khoảng dự đoán tham khảo"
+                        "#### 📏 Sai số dự đoán tham khảo"
                     )
 
                     st.info(
                         (
-                            f"Điểm G3 được ước lượng trong khoảng "
-                            f"**{prediction_lower:.2f} – "
-                            f"{prediction_upper:.2f} / 20** "
-                            "dựa trên RMSE của mô hình."
+                            f"**Điểm dự đoán:** "
+                            f"{predicted_g3:.2f} / 20\n\n"
+                            f"**Sai số tham khảo:** "
+                            f"±{rmse:.2f} điểm\n\n"
+                            f"**Khoảng dự đoán:** "
+                            f"{prediction_lower:.2f} – "
+                            f"{prediction_upper:.2f} / 20"
                         )
                     )
 
 
                     # ==================================
-                    # SAI SỐ THAM KHẢO
+                    # CHỈ SỐ ĐÁNH GIÁ MÔ HÌNH
                     # ==================================
                     error_col1, error_col2 = (
                         st.columns(2)
@@ -1427,8 +1430,8 @@ if submitted:
                     with error_col1:
 
                         st.metric(
-                            "MAE tham khảo",
-                            f"±{mae:.2f} điểm",
+                            "MAE",
+                            f"{mae:.2f} điểm",
                             help=(
                                 "Sai số tuyệt đối trung bình "
                                 "của mô hình trên tập đánh giá."
@@ -1439,22 +1442,21 @@ if submitted:
                     with error_col2:
 
                         st.metric(
-                            "RMSE tham khảo",
+                            "RMSE",
                             f"{rmse:.2f} điểm",
                             help=(
-                                "Căn bậc hai của sai số bình phương "
-                                "trung bình. Chỉ số này nhạy hơn "
-                                "với các sai số lớn."
+                                "RMSE được dùng để tạo khoảng sai số "
+                                "tham khảo quanh điểm G3 dự đoán."
                             ),
                         )
 
 
                     st.caption(
                         (
-                            "⚠️ Khoảng trên là khoảng tham khảo "
-                            "được tính từ điểm dự đoán ± RMSE và "
-                            "giới hạn trong thang điểm 0–20. "
-                            "Đây không phải khoảng tin cậy 95%."
+                            "⚠️ Khoảng tham khảo được tính bằng "
+                            "G3 dự đoán ± RMSE và giới hạn trong "
+                            "thang điểm 0–20. Đây là khoảng sai số "
+                            "tham khảo, không phải khoảng tin cậy 95%."
                         )
                     )
 
