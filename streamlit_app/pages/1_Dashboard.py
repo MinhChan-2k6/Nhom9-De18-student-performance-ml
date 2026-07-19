@@ -7,10 +7,7 @@ import pandas as pd
 import requests
 import streamlit as st
 
-from streamlit_app.components.styles import (
-    apply_dark_mode,
-    load_css,
-)
+from streamlit_app.components.styles import load_css
 from streamlit_app.config import API_BASE_URL
 
 
@@ -93,7 +90,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-apply_dark_mode()
 
 # ==================================================
 # HÀM GỌI API
