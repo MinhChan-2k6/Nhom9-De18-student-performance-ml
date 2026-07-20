@@ -10,7 +10,7 @@ from streamlit_app.config import API_BASE_URL
 # Cấu hình trang
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Dự đoán kết quả",
+    page_title="Dự đoán điểm G3",
     page_icon="🤖",
     layout="wide",
 )
@@ -81,7 +81,7 @@ def display_api_error(response: requests.Response) -> None:
 # --------------------------------------------------
 # Tiêu đề trang
 # --------------------------------------------------
-st.title("🤖 Dự đoán kết quả học tập")
+st.title("🤖 Dự đoán điểm G3")
 st.caption(
     "Chỉ cần nhập thông tin cơ bản để dự đoán. "
     "Thông tin chi tiết là tùy chọn và giúp kết quả phù hợp hơn với từng học sinh."
@@ -703,6 +703,19 @@ if submitted:
                     predicted_g3 = float(
                         prediction_data["predicted_g3"]
                     )
+
+                    mae = float(
+                        prediction_data["mae"]
+                    )
+                    rmse = float(
+                        prediction_data["rmse"]
+                    )
+                    prediction_lower = float(
+                        prediction_data["prediction_lower"]
+                    )
+                    prediction_upper = float(
+                        prediction_data["prediction_upper"]
+                    )
                     model_name = prediction_data.get(
                         "model",
                         "Không xác định",
@@ -711,44 +724,88 @@ if submitted:
                         "scenario",
                         prediction_mode_value,
                     )
-                    converted_result = prediction_data.get(
-                        "converted_result",
-                        "Đạt" if predicted_g3 >= 10 else "Trượt",
-                    )
-
-                    result_icon = (
-                        "✅"
-                        if converted_result == "Đạt"
-                        else "⚠️"
-                    )
-
                     st.success("Dự đoán thành công.")
 
                     st.markdown(
                         f"""
                         <div class="prediction-result-card">
-                            <div class="prediction-result-icon">{result_icon}</div>
+                            <div class="prediction-result-icon">🎯</div>
                             <p class="prediction-result-label">Điểm G3 dự đoán</p>
                             <div class="prediction-result-score">
-                                {predicted_g3:.2f} / 20
+                                {predicted_g3:.2f} ± {rmse:.2f}
                             </div>
                             <span class="prediction-result-status">
-                                {converted_result}
+                                Thang điểm 0 – 20
                             </span>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
 
+
+                    st.markdown(
+                        "#### 📏 Sai số dự đoán tham khảo"
+                    )
+
+                    st.info(
+                        (
+                            f"**Điểm dự đoán:** "
+                            f"{predicted_g3:.2f} / 20\n\n"
+                            f"**Sai số tham khảo:** "
+                            f"±{rmse:.2f} điểm\n\n"
+                            f"**Khoảng dự đoán:** "
+                            f"{prediction_lower:.2f} – "
+                            f"{prediction_upper:.2f} / 20"
+                        )
+                    )
+
+                    error_col1, error_col2 = st.columns(2)
+
+                    with error_col1:
+                        st.metric(
+                            "MAE",
+                            f"{mae:.2f} điểm",
+                            help=(
+                                "Sai số tuyệt đối trung bình của mô hình "
+                                "trên tập đánh giá."
+                            ),
+                        )
+
+                    with error_col2:
+                        st.metric(
+                            "RMSE",
+                            f"{rmse:.2f} điểm",
+                            help=(
+                                "RMSE được dùng để tạo khoảng sai số "
+                                "tham khảo quanh điểm G3 dự đoán."
+                            ),
+                        )
+
+                    st.caption(
+                        "Khoảng tham khảo được tính bằng "
+                        "G3 dự đoán ± RMSE và giới hạn trong thang điểm 0–20. "
+                        "Đây là khoảng sai số tham khảo, không phải khoảng tin cậy 95%."
+                    )
+
                     info_col1, info_col2 = st.columns(2)
 
                     with info_col1:
                         st.write("**Học sinh:**", cleaned_name)
-                        st.write("**Kết quả:**", converted_result)
+                        st.write(
+                            "**Điểm G3 dự đoán:**",
+                            f"{predicted_g3:.2f} / 20",
+                        )
+                        st.write(
+                            "**Khoảng tham khảo:**",
+                            (
+                                f"{prediction_lower:.2f} – "
+                                f"{prediction_upper:.2f} / 20"
+                            ),
+                        )
 
                     with info_col2:
                         st.write("**Model:**", model_name)
-                        st.write("**Scenario:**", scenario_name)
+                        st.write("**Kịch bản dự đoán:**", scenario_name)
 
                     st.caption(
                         "Kết quả đã được FastAPI tự động lưu vào SQL Server."
@@ -759,8 +816,9 @@ if submitted:
 
             except requests.exceptions.ConnectionError:
                 st.error(
-                    "Không kết nối được FastAPI. "
-                    "Hãy chạy API tại http://127.0.0.1:8000 trước."
+                    "Không kết nối được FastAPI tại "
+                    f"{API_BASE_URL}. "
+                    "Hãy kiểm tra API đang chạy."
                 )
 
             except requests.exceptions.Timeout:
