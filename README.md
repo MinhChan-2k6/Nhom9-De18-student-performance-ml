@@ -4,7 +4,7 @@
 Đề tài “Dự đoán kết quả học tập của học sinh” xây dựng hệ thống Machine Learning nhằm dự đoán điểm cuối kỳ G3 của học sinh dựa trên các yếu tố nhân khẩu học, xã hội và quá trình học tập.
 
 # II. LINK VIDEO DEMO: 
-`LINK VIDEO`
+`https://drive.google.com/file/d/1bD5nigdzD_tLzCq_0Yt1R0JFw0weEXX0/view?usp=sharing`
 
 # III. BẢNG PHÂN CÔNG CÔNG VIỆC VÀ % ĐÓNG GÓP
 ## Phân công công việc và tỷ lệ đóng góp
